@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:bobtemplatesplone.readthedocs.io)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.astral.sh)",
+      "WebFetch(domain:docs.pyinvoke.org)",
+      "WebFetch(domain:copier.readthedocs.io)",
+      "WebFetch(domain:www.sarahglasmacher.com)",
+      "WebFetch(domain:www.realpython.com)",
+      "WebFetch(domain:lonelyneuron.substack.com)",
+      "WebFetch(domain:artur.wtf)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "mcp__plugin_perplexity_perplexity__perplexity_ask"
+    ]
+  }
+}

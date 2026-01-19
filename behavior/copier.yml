@@ -1,0 +1,54 @@
+_min_copier_version: "9.0.0"
+_subdirectory: template
+_answers_file: .copier-answers.behavior.yml
+
+_tasks:
+  - "python3 {{ _copier_conf.src_path }}/tasks.py post_copy '{{ _copier_conf.dst_path }}' '{{ behavior_name }}'"
+
+# Behavior name
+behavior_name:
+  type: str
+  help: "Behavior interface name (e.g., 'IFeatured', 'ITaggable')"
+  validator: "{% if not behavior_name %}Behavior name is required{% endif %}"
+
+behavior_description:
+  type: str
+  help: "Short description of the behavior"
+  default: "A custom Dexterity behavior"
+
+# Package info - read from parent addon
+package_name:
+  type: str
+  help: "Parent addon package name"
+
+package_folder:
+  type: str
+  help: "Parent addon package folder (e.g., collective/mypackage)"
+  default: "{{ package_name | replace('.', '/') }}"
+
+# Behavior options
+behavior_marker:
+  type: bool
+  help: "Create a marker interface?"
+  default: true
+
+behavior_factory:
+  type: bool
+  help: "Create a behavior factory/adapter?"
+  default: true
+
+# Computed values
+behavior_interface:
+  type: str
+  default: "{{ behavior_name if behavior_name.startswith('I') else 'I' + behavior_name }}"
+  when: false
+
+behavior_module:
+  type: str
+  default: "{{ behavior_interface | lower }}"
+  when: false
+
+behavior_class:
+  type: str
+  default: "{{ behavior_interface[1:] if behavior_interface.startswith('I') else behavior_interface }}"
+  when: false

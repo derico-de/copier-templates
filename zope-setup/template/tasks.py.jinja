@@ -1,0 +1,62 @@
+"""Invoke tasks for {{ project_name }}."""
+from invoke import task
+
+
+@task
+def start(c):
+    """Start the Plone instance."""
+    c.run("runwsgi instance/etc/zope.ini")
+
+
+@task
+def debug(c):
+    """Start the Plone instance in debug mode."""
+    c.run("runwsgi -d instance/etc/zope.ini")
+
+
+@task
+def shell(c):
+    """Open a Zope debug shell."""
+    c.run("zconsole debug instance/etc/zope.ini")
+
+
+@task
+def test(c, verbose=False):
+    """Run tests."""
+    cmd = "pytest"
+    if verbose:
+        cmd += " -v"
+    c.run(cmd)
+
+
+@task
+def create_site(c, site_id="Plone"):
+    """Create a new Plone site."""
+    script = f'''
+from Testing.makerequest import makerequest
+import transaction
+app = makerequest(app)
+from plone.distribution.api import site as site_api
+site_api.create(
+    app,
+    "{{ distribution }}",
+    "{site_id}",
+    title="{{ project_title }}",
+)
+transaction.commit()
+print(f"Created site: {site_id}")
+'''
+    c.run(f'zconsole run instance/etc/zope.ini -c "{script}"')
+
+
+@task
+def format(c):
+    """Format code with ruff."""
+    c.run("ruff format .")
+    c.run("ruff check --fix .")
+
+
+@task
+def lint(c):
+    """Run linting checks."""
+    c.run("ruff check .")

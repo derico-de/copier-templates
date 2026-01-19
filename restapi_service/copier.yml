@@ -1,0 +1,75 @@
+_min_copier_version: "9.0.0"
+_subdirectory: template
+_answers_file: .copier-answers.restapi-service.yml
+
+_tasks:
+  - "python3 {{ _copier_conf.src_path }}/tasks.py post_copy '{{ _copier_conf.dst_path }}' '{{ service_name }}'"
+
+# Service name
+service_name:
+  type: str
+  help: "Service endpoint name (e.g., 'stats', 'my-endpoint')"
+  validator: "{% if not service_name %}Service name is required{% endif %}"
+
+service_description:
+  type: str
+  help: "Short description of the service"
+  default: "A custom REST API endpoint"
+
+# Package info - read from parent addon
+package_name:
+  type: str
+  help: "Parent addon package name"
+
+package_folder:
+  type: str
+  help: "Parent addon package folder (e.g., collective/mypackage)"
+  default: "{{ package_name | replace('.', '/') }}"
+
+# HTTP methods
+http_get:
+  type: bool
+  help: "Support GET requests?"
+  default: true
+
+http_post:
+  type: bool
+  help: "Support POST requests?"
+  default: false
+
+http_patch:
+  type: bool
+  help: "Support PATCH requests?"
+  default: false
+
+http_delete:
+  type: bool
+  help: "Support DELETE requests?"
+  default: false
+
+# Context
+service_for:
+  type: str
+  help: "Context for the service"
+  default: "plone.dexterity.interfaces.IDexterityContainer"
+  choices:
+    - "plone.dexterity.interfaces.IDexterityContainer"
+    - "plone.dexterity.interfaces.IDexterityContent"
+    - "Products.CMFPlone.interfaces.IPloneSiteRoot"
+    - "zope.interface.Interface"
+
+# Computed values
+service_module:
+  type: str
+  default: "{{ service_name | lower | replace('-', '_') | replace(' ', '_') }}"
+  when: false
+
+service_class:
+  type: str
+  default: "{{ service_name | replace('-', ' ') | replace('_', ' ') | title | replace(' ', '') }}Service"
+  when: false
+
+service_endpoint:
+  type: str
+  default: "@{{ service_name | lower | replace('_', '-') | replace(' ', '-') }}"
+  when: false

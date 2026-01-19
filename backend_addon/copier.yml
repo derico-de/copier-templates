@@ -1,0 +1,70 @@
+_min_copier_version: "9.0.0"
+_subdirectory: template
+_answers_file: .copier-answers.yml
+
+# Package identification
+package_name:
+  type: str
+  help: "Python package name (e.g., collective.mypackage or mypackage)"
+  validator: "{% if not package_name %}Package name is required{% endif %}"
+
+package_title:
+  type: str
+  help: "Human-readable package title"
+  default: "{{ package_name | replace('.', ' ') | replace('_', ' ') | title }}"
+
+package_description:
+  type: str
+  help: "Short description of the package"
+  default: "A Plone addon package"
+
+# Plone configuration
+plone_version:
+  type: str
+  help: "Minimum Plone version supported"
+  default: "6.1"
+  choices:
+    - "6.1"
+    - "6.0"
+
+is_headless:
+  type: bool
+  help: "Is this a headless/API-only addon?"
+  default: false
+
+# Author information
+author_name:
+  type: str
+  help: "Author name"
+  default: "Plone Developer"
+
+author_email:
+  type: str
+  help: "Author email"
+  default: "dev@plone.org"
+
+# Computed values - package folder structure
+package_folder:
+  type: str
+  default: "{{ package_name | replace('.', '/') }}"
+  when: false
+
+namespace_parts:
+  type: str
+  default: "{{ package_name.split('.')[:-1] | join('.') }}"
+  when: false
+
+package_module:
+  type: str
+  default: "{{ package_name.split('.')[-1] }}"
+  when: false
+
+current_year:
+  type: str
+  default: "{{ '%Y' | strftime }}"
+  when: false
+
+current_date:
+  type: str
+  default: "{{ '%Y-%m-%d' | strftime }}"
+  when: false

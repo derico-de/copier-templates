@@ -1,0 +1,68 @@
+_min_copier_version: "9.0.0"
+_subdirectory: template
+_answers_file: .copier-answers.content-type.yml
+
+_tasks:
+  - "python3 {{ _copier_conf.src_path }}/tasks.py post_copy '{{ _copier_conf.dst_path }}' '{{ content_type_name }}'"
+
+# Content type name
+content_type_name:
+  type: str
+  help: "Content type name (e.g., 'News Item', 'Article')"
+  validator: "{% if not content_type_name %}Content type name is required{% endif %}"
+
+content_type_description:
+  type: str
+  help: "Short description of the content type"
+  default: "A custom content type"
+
+# Package info - read from parent addon
+package_name:
+  type: str
+  help: "Parent addon package name"
+
+package_folder:
+  type: str
+  help: "Parent addon package folder (e.g., collective/mypackage)"
+  default: "{{ package_name | replace('.', '/') }}"
+
+# Base class options
+content_type_base:
+  type: str
+  help: "Base class for the content type"
+  default: "Container"
+  choices:
+    - "Container"
+    - "Item"
+
+# Add behaviors
+enable_dublin_core:
+  type: bool
+  help: "Enable Dublin Core metadata behavior?"
+  default: true
+
+enable_navigation:
+  type: bool
+  help: "Enable navigation behavior (exclude from nav)?"
+  default: true
+
+# Computed values
+content_type_class:
+  type: str
+  default: "{{ content_type_name | replace(' ', '') | replace('-', '') | replace('_', '') }}"
+  when: false
+
+content_type_module:
+  type: str
+  default: "{{ content_type_name | lower | replace(' ', '_') | replace('-', '_') }}"
+  when: false
+
+content_type_interface:
+  type: str
+  default: "I{{ content_type_class }}"
+  when: false
+
+content_type_portal_type:
+  type: str
+  default: "{{ content_type_name }}"
+  when: false

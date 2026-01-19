@@ -1,0 +1,69 @@
+_min_copier_version: "9.0.0"
+_subdirectory: template
+_answers_file: .copier-answers.yml
+
+# Project identification
+project_name:
+  type: str
+  help: "Project name (used for directory and package naming)"
+  validator: "{% if not project_name %}Project name is required{% endif %}"
+
+project_title:
+  type: str
+  help: "Human-readable project title"
+  default: "{{ project_name | replace('-', ' ') | title }}"
+
+project_description:
+  type: str
+  help: "Short description of the project"
+  default: "A Plone project"
+
+# Plone configuration
+plone_version:
+  type: str
+  help: "Plone version to use"
+  default: "6.1.1"
+  choices:
+    - "6.1.1"
+    - "6.1.0"
+    - "6.0.13"
+
+distribution:
+  type: str
+  help: "Plone distribution to use"
+  default: "plone.volto"
+  choices:
+    - "plone.volto"
+    - "plone.classicui"
+
+# Database configuration
+db_storage:
+  type: str
+  help: "Database storage backend"
+  default: "direct"
+  choices:
+    - "direct"
+    - "relstorage"
+    - "blobs"
+
+# Author information
+author_name:
+  type: str
+  help: "Author name"
+  default: "Plone Developer"
+
+author_email:
+  type: str
+  help: "Author email"
+  default: "dev@plone.org"
+
+# Computed values
+current_year:
+  type: str
+  default: "{{ '%Y' | strftime }}"
+  when: false
+
+current_date:
+  type: str
+  default: "{{ '%Y-%m-%d' | strftime }}"
+  when: false

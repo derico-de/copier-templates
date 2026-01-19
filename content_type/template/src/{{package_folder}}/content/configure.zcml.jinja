@@ -1,0 +1,12 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:plone="http://namespaces.plone.org/plone"
+    i18n_domain="{{ package_name }}">
+
+  <plone:behavior
+      title="{{ content_type_interface }}"
+      description="{{ content_type_description }}"
+      provides=".{{ content_type_module }}.{{ content_type_interface }}"
+      />
+
+</configure>

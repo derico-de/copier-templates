@@ -1,0 +1,44 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:plone="http://namespaces.plone.org/plone"
+    i18n_domain="{{ package_name }}">
+
+  <plone:service
+      method="GET"
+      for="{{ service_for }}"
+      factory=".{{ service_module }}.{{ service_class }}"
+      name="{{ service_endpoint }}"
+      permission="zope2.View"
+      />
+{%- if http_post %}
+
+  <plone:service
+      method="POST"
+      for="{{ service_for }}"
+      factory=".{{ service_module }}.{{ service_class }}"
+      name="{{ service_endpoint }}"
+      permission="cmf.ModifyPortalContent"
+      />
+{%- endif %}
+{%- if http_patch %}
+
+  <plone:service
+      method="PATCH"
+      for="{{ service_for }}"
+      factory=".{{ service_module }}.{{ service_class }}"
+      name="{{ service_endpoint }}"
+      permission="cmf.ModifyPortalContent"
+      />
+{%- endif %}
+{%- if http_delete %}
+
+  <plone:service
+      method="DELETE"
+      for="{{ service_for }}"
+      factory=".{{ service_module }}.{{ service_class }}"
+      name="{{ service_endpoint }}"
+      permission="cmf.ModifyPortalContent"
+      />
+{%- endif %}
+
+</configure>

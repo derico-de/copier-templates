@@ -1,0 +1,17 @@
+"""Pytest configuration for {{ package_name }} tests."""
+import pytest
+
+from {{ package_name }}.testing import FUNCTIONAL_TESTING
+from {{ package_name }}.testing import INTEGRATION_TESTING
+
+
+@pytest.fixture(scope="class")
+def integration_testing():
+    """Integration testing fixture."""
+    return INTEGRATION_TESTING
+
+
+@pytest.fixture(scope="class")
+def functional_testing():
+    """Functional testing fixture."""
+    return FUNCTIONAL_TESTING

@@ -1,0 +1,48 @@
+%define INSTANCEHOME {{ '{{' }} INSTANCEHOME {{ '}}' }}
+instancehome $INSTANCEHOME
+
+%define CLIENTHOME {{ '{{' }} CLIENTHOME {{ '}}' }}
+clienthome $CLIENTHOME
+
+debug-mode {{ '{{' }} DEBUG_MODE {{ '}}' }}
+security-policy-implementation {{ '{{' }} SECURITY_IMPLEMENTATION {{ '}}' }}
+verbose-security {{ '{{' }} VERBOSE_SECURITY {{ '}}' }}
+
+default-zpublisher-encoding utf-8
+
+{%- if db_storage == "direct" %}
+<zodb_db main>
+    <filestorage>
+        path $CLIENTHOME/var/Data.fs
+        blob-dir $CLIENTHOME/var/blobs
+    </filestorage>
+    mount-point /
+</zodb_db>
+{%- elif db_storage == "relstorage" %}
+<zodb_db main>
+    <relstorage>
+        <postgresql>
+            dsn {{ '{{' }} RELSTORAGE_DSN {{ '}}' }}
+        </postgresql>
+        blob-dir $CLIENTHOME/var/blobs
+        shared-blob-dir false
+    </relstorage>
+    mount-point /
+</zodb_db>
+{%- elif db_storage == "blobs" %}
+<zodb_db main>
+    <filestorage>
+        path $CLIENTHOME/var/Data.fs
+        blob-dir $CLIENTHOME/var/blobs
+    </filestorage>
+    mount-point /
+</zodb_db>
+{%- endif %}
+
+<zodb_db temporary>
+    <temporarystorage>
+        name temporary storage for sessioning
+    </temporarystorage>
+    mount-point /temp_folder
+    container-class Products.TemporaryFolder.TemporaryContainer
+</zodb_db>

@@ -1,0 +1,48 @@
+"""Test {{ package_name }} installation."""
+import pytest
+
+from plone import api
+from plone.app.testing import setRoles
+from plone.app.testing import TEST_USER_ID
+
+from {{ package_name }}.testing import INTEGRATION_TESTING
+
+
+class TestSetup:
+    """Test installation and setup."""
+
+    layer = INTEGRATION_TESTING
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, integration_testing):
+        self.portal = integration_testing["portal"]
+
+    def test_addon_installed(self):
+        """Test addon is installed."""
+        installer = api.portal.get_tool("portal_quickinstaller")
+        assert installer.isProductInstalled("{{ package_name }}")
+
+    def test_browserlayer(self):
+        """Test browserlayer is registered."""
+        from plone.browserlayer import utils
+        # Add actual browserlayer check if you have one
+        # from {{ package_name }}.interfaces import I{{ package_name.replace('.', ' ').title().replace(' ', '') }}Layer
+        # assert I{{ package_name.replace('.', ' ').title().replace(' ', '') }}Layer in utils.registered_layers()
+        pass
+
+
+class TestUninstall:
+    """Test uninstallation."""
+
+    layer = INTEGRATION_TESTING
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, integration_testing):
+        self.portal = integration_testing["portal"]
+        setRoles(self.portal, TEST_USER_ID, ["Manager"])
+        self.installer = api.portal.get_tool("portal_quickinstaller")
+        self.installer.uninstallProducts(["{{ package_name }}"])
+
+    def test_addon_uninstalled(self):
+        """Test addon is uninstalled."""
+        assert not self.installer.isProductInstalled("{{ package_name }}")

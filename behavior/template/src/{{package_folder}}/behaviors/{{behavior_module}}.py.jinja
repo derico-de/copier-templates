@@ -1,0 +1,59 @@
+"""{{ behavior_name }} behavior."""
+from plone.autoform.interfaces import IFormFieldProvider
+from plone.supermodel import model
+from zope import schema
+from zope.interface import Interface
+from zope.interface import provider
+{%- if behavior_factory %}
+from zope.interface import implementer
+from plone.dexterity.interfaces import IDexterityContent
+from zope.component import adapter
+{%- endif %}
+
+
+{%- if behavior_marker %}
+
+
+class {{ behavior_interface }}Marker(Interface):
+    """Marker interface for {{ behavior_interface }}."""
+
+    pass
+{%- endif %}
+
+
+@provider(IFormFieldProvider)
+class {{ behavior_interface }}(model.Schema):
+    """{{ behavior_description }}"""
+
+    # Add your behavior fields here
+    # Example:
+    # featured = schema.Bool(
+    #     title="Featured",
+    #     description="Mark this item as featured",
+    #     required=False,
+    #     default=False,
+    # )
+    pass
+
+
+{%- if behavior_factory %}
+
+
+@implementer({{ behavior_interface }})
+@adapter(IDexterityContent)
+class {{ behavior_class }}:
+    """Adapter for {{ behavior_interface }} behavior."""
+
+    def __init__(self, context):
+        self.context = context
+
+    # Add property implementations for your fields here
+    # Example:
+    # @property
+    # def featured(self):
+    #     return getattr(self.context, 'featured', False)
+    #
+    # @featured.setter
+    # def featured(self, value):
+    #     self.context.featured = value
+{%- endif %}

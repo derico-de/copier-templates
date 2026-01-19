@@ -1,0 +1,61 @@
+# {{ package_title }}
+
+{{ package_description }}
+
+## Features
+
+- Compatible with Plone {{ plone_version }}+
+{%- if is_headless %}
+- Headless/API-only addon
+{%- endif %}
+
+## Installation
+
+Add `{{ package_name }}` to your project's dependencies:
+
+```python
+# In your pyproject.toml
+dependencies = [
+    "{{ package_name }}",
+    # ...
+]
+```
+
+Then activate the addon in your Plone site's control panel or via GenericSetup.
+
+## Development
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/collective/{{ package_name }}.git
+cd {{ package_name }}
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate
+
+# Install in development mode
+pip install -e ".[test]"
+```
+
+### Running Tests
+
+```bash
+pytest
+```
+
+### Running Tests with Coverage
+
+```bash
+pytest --cov={{ package_name }} --cov-report=html
+```
+
+## License
+
+GPL-2.0-or-later
+
+## Author
+
+{{ author_name }} <{{ author_email }}>

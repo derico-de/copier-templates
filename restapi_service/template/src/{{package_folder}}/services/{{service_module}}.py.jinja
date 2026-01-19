@@ -1,0 +1,84 @@
+"""{{ service_name }} REST API service.
+
+{{ service_description }}
+"""
+from plone.restapi.services import Service
+from zope.interface import implementer
+from zope.publisher.interfaces import IPublishTraverse
+
+
+@implementer(IPublishTraverse)
+class {{ service_class }}(Service):
+    """{{ service_description }}
+
+    Endpoint: {{ service_endpoint }}
+    """
+
+    def __init__(self, context, request):
+        super().__init__(context, request)
+        self.params = []
+
+    def publishTraverse(self, request, name):
+        """Handle URL path segments after the endpoint."""
+        self.params.append(name)
+        return self
+{%- if http_get %}
+
+    def reply(self):
+        """Handle GET request.
+
+        Returns JSON response.
+        """
+        return {
+            "service": "{{ service_endpoint }}",
+            "status": "ok",
+            "params": self.params,
+            # Add your response data here
+        }
+{%- endif %}
+{%- if http_post %}
+
+    def POST(self):
+        """Handle POST request.
+
+        Process submitted data and return JSON response.
+        """
+        # Get request body
+        # body = self.request.get("BODY", "{}")
+        # data = json.loads(body)
+
+        return {
+            "service": "{{ service_endpoint }}",
+            "method": "POST",
+            "status": "created",
+            # Add your response data here
+        }
+{%- endif %}
+{%- if http_patch %}
+
+    def PATCH(self):
+        """Handle PATCH request.
+
+        Update data and return JSON response.
+        """
+        return {
+            "service": "{{ service_endpoint }}",
+            "method": "PATCH",
+            "status": "updated",
+            # Add your response data here
+        }
+{%- endif %}
+{%- if http_delete %}
+
+    def DELETE(self):
+        """Handle DELETE request.
+
+        Delete data and return JSON response.
+        """
+        return {
+            "service": "{{ service_endpoint }}",
+            "method": "DELETE",
+            "status": "deleted",
+            # Add your response data here
+        }
+{%- endif %}

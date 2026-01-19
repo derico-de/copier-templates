@@ -1,0 +1,18 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:plone="http://namespaces.plone.org/plone"
+    i18n_domain="{{ package_name }}">
+
+  <plone:behavior
+      title="{{ behavior_interface }}"
+      description="{{ behavior_description }}"
+      provides=".{{ behavior_module }}.{{ behavior_interface }}"
+{%- if behavior_marker %}
+      marker=".{{ behavior_module }}.{{ behavior_interface }}Marker"
+{%- endif %}
+{%- if behavior_factory %}
+      factory=".{{ behavior_module }}.{{ behavior_class }}"
+{%- endif %}
+      />
+
+</configure>
