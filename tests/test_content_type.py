@@ -15,7 +15,13 @@ class TestContentTypeRequiresAddon:
             data={"content_type_name": "Document"},
         )
         assert result.returncode != 0
-        assert "parent addon" in result.stderr.lower() or "no parent addon" in result.stderr.lower()
+        # Copier 9.x fails with "package_name is required" before custom validation
+        error_msg = result.stderr.lower()
+        assert (
+            "parent addon" in error_msg
+            or "no parent addon" in error_msg
+            or "package_name" in error_msg
+        )
 
     def test_succeeds_with_parent_addon(self, temp_dir, backend_addon_template, content_type_template):
         """Content type succeeds when parent addon exists."""

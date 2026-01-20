@@ -10,6 +10,7 @@ def run_copier(
     data: dict[str, Any] | None = None,
     defaults: bool = True,
     vcs_ref: str | None = None,
+    overwrite: bool = True,
 ) -> subprocess.CompletedProcess:
     """
     Run copier with given parameters.
@@ -20,6 +21,7 @@ def run_copier(
         data: Dictionary of answers to copier prompts
         defaults: Whether to use default values for prompts
         vcs_ref: Git reference to use (None for local templates)
+        overwrite: Whether to overwrite existing files without asking
 
     Returns:
         CompletedProcess with stdout, stderr, and returncode
@@ -28,6 +30,9 @@ def run_copier(
 
     if defaults:
         cmd.append("--defaults")
+
+    if overwrite:
+        cmd.append("--overwrite")
 
     if vcs_ref:
         cmd.extend(["--vcs-ref", vcs_ref])
