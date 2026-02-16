@@ -59,4 +59,25 @@ line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "W"]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "W",    # pycodestyle warnings
+    "C90",  # mccabe complexity
+    "B",    # bugbear
+    "S",    # bandit (security)
+    "UP",   # pyupgrade
+    "SIM",  # simplify
+    "PGH",  # pygrep-hooks
+]
+ignore = ["E731"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["{{ project_name.split('.')[0] }}"]
+
+[tool.ruff.format]
+preview = true

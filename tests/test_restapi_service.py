@@ -147,3 +147,86 @@ class TestRestapiServiceIntegration:
         data = read_toml(pyproject)
         subtemplates = data["tool"]["plone"]["backend_addon"]["settings"]["subtemplates"]
         assert "@stats" in subtemplates["services"]
+
+    def test_adds_parent_zcml_include(self, addon_dir, restapi_service_template):
+        """Service adds include to parent configure.zcml."""
+        run_copier(
+            restapi_service_template,
+            addon_dir,
+            data={
+                "service_name": "stats",
+                "package_name": "my.pkg",
+            },
+        )
+
+        parent_zcml = addon_dir / "src/my/pkg/configure.zcml"
+        assert_file_exists(parent_zcml, content_contains='<include package=".services" />')
+
+
+class TestRestapiServiceEdgeCases:
+    """Test REST API service edge cases and options."""
+
+    @pytest.fixture
+    def addon_dir(self, temp_dir, backend_addon_template):
+        """Create a parent addon for testing."""
+        pkg_dir = temp_dir / "mypackage"
+        run_copier(
+            backend_addon_template,
+            pkg_dir,
+            data={"package_name": "collective.mypackage"},
+        )
+        return pkg_dir
+
+    def test_service_with_post_method(self, addon_dir, restapi_service_template):
+        """Service with POST method support."""
+        run_copier(
+            restapi_service_template,
+            addon_dir,
+            data={
+                "service_name": "submit",
+                "package_name": "collective.mypackage",
+                "http_post": True,
+            },
+        )
+
+        service_file = addon_dir / "src/collective/mypackage/services/submit.py"
+        assert_file_exists(service_file, content_contains="def POST(self)")
+
+        zcml_file = addon_dir / "src/collective/mypackage/services/configure.zcml"
+        assert_file_exists(zcml_file, content_contains='method="POST"')
+
+    def test_service_with_delete_method(self, addon_dir, restapi_service_template):
+        """Service with DELETE method support."""
+        run_copier(
+            restapi_service_template,
+            addon_dir,
+            data={
+                "service_name": "cleanup",
+                "package_name": "collective.mypackage",
+                "http_delete": True,
+            },
+        )
+
+        service_file = addon_dir / "src/collective/mypackage/services/cleanup.py"
+        assert_file_exists(service_file, content_contains="def DELETE(self)")
+
+        zcml_file = addon_dir / "src/collective/mypackage/services/configure.zcml"
+        assert_file_exists(zcml_file, content_contains='method="DELETE"')
+
+    def test_service_for_site_root(self, addon_dir, restapi_service_template):
+        """Service registered for IPloneSiteRoot."""
+        run_copier(
+            restapi_service_template,
+            addon_dir,
+            data={
+                "service_name": "site-info",
+                "package_name": "collective.mypackage",
+                "service_for": "Products.CMFPlone.interfaces.IPloneSiteRoot",
+            },
+        )
+
+        zcml_file = addon_dir / "src/collective/mypackage/services/configure.zcml"
+        assert_file_exists(
+            zcml_file,
+            content_contains="Products.CMFPlone.interfaces.IPloneSiteRoot",
+        )

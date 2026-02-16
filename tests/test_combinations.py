@@ -1,4 +1,6 @@
 """Tests for multi-subtemplate combinations."""
+import xml.etree.ElementTree as ET
+
 import pytest
 
 from helpers import assert_dir_exists, assert_file_exists, read_toml, run_copier
@@ -283,3 +285,111 @@ class TestSubtemplateMultipleInstances:
         assert "IFeatured" in behaviors
         assert "ITaggable" in behaviors
         assert "ISocial" in behaviors
+
+
+class TestZCMLIntegrity:
+    """Test ZCML integrity after multiple subtemplate operations."""
+
+    def test_no_duplicate_zcml_includes(
+        self, temp_dir, backend_addon_template, content_type_template
+    ):
+        """Multiple content types produce only one include directive."""
+        pkg_dir = temp_dir / "pkg"
+        run_copier(
+            backend_addon_template,
+            pkg_dir,
+            data={"package_name": "my.pkg"},
+        )
+
+        for ct_name in ["Article", "News Item"]:
+            run_copier(
+                content_type_template,
+                pkg_dir,
+                data={
+                    "content_type_name": ct_name,
+                    "package_name": "my.pkg",
+                },
+            )
+
+        parent_zcml = pkg_dir / "src/my/pkg/configure.zcml"
+        content = parent_zcml.read_text()
+        assert content.count('<include package=".content"') == 1
+
+    def test_all_zcml_files_are_valid_xml(
+        self,
+        temp_dir,
+        backend_addon_template,
+        content_type_template,
+        behavior_template,
+        restapi_service_template,
+    ):
+        """All generated ZCML files parse as valid XML."""
+        pkg_dir = temp_dir / "pkg"
+        run_copier(
+            backend_addon_template,
+            pkg_dir,
+            data={"package_name": "my.pkg"},
+        )
+        run_copier(
+            content_type_template,
+            pkg_dir,
+            data={"content_type_name": "Article", "package_name": "my.pkg"},
+        )
+        run_copier(
+            behavior_template,
+            pkg_dir,
+            data={"behavior_name": "IFeatured", "package_name": "my.pkg"},
+        )
+        run_copier(
+            restapi_service_template,
+            pkg_dir,
+            data={"service_name": "stats", "package_name": "my.pkg"},
+        )
+
+        zcml_files = list(pkg_dir.rglob("*.zcml"))
+        assert len(zcml_files) >= 4  # parent + 3 subpackages
+
+        for zcml_file in zcml_files:
+            try:
+                ET.parse(zcml_file)
+            except ET.ParseError as e:
+                pytest.fail(f"Invalid XML in {zcml_file}: {e}")
+
+    def test_pyproject_integrity_after_all_subtemplates(
+        self,
+        temp_dir,
+        backend_addon_template,
+        content_type_template,
+        behavior_template,
+        restapi_service_template,
+    ):
+        """pyproject.toml remains valid after all subtemplates."""
+        pkg_dir = temp_dir / "pkg"
+        run_copier(
+            backend_addon_template,
+            pkg_dir,
+            data={"package_name": "my.pkg"},
+        )
+        run_copier(
+            content_type_template,
+            pkg_dir,
+            data={"content_type_name": "Article", "package_name": "my.pkg"},
+        )
+        run_copier(
+            behavior_template,
+            pkg_dir,
+            data={"behavior_name": "IFeatured", "package_name": "my.pkg"},
+        )
+        run_copier(
+            restapi_service_template,
+            pkg_dir,
+            data={"service_name": "stats", "package_name": "my.pkg"},
+        )
+
+        data = read_toml(pkg_dir / "pyproject.toml")
+        settings = data["tool"]["plone"]["backend_addon"]["settings"]
+        assert settings["package_name"] == "my.pkg"
+        subtemplates = settings["subtemplates"]
+        assert "Article" in subtemplates["content_types"]
+        assert "IFeatured" in subtemplates["behaviors"]
+        assert "@stats" in subtemplates["services"]

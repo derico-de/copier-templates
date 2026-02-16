@@ -141,3 +141,101 @@ class TestContentTypeIntegration:
         data = read_toml(pyproject)
         subtemplates = data["tool"]["plone"]["backend_addon"]["settings"]["subtemplates"]
         assert "Article" in subtemplates["content_types"]
+
+    def test_adds_parent_zcml_include(self, addon_dir, content_type_template):
+        """Content type adds include to parent configure.zcml."""
+        run_copier(
+            content_type_template,
+            addon_dir,
+            data={"content_type_name": "Article"},
+        )
+
+        parent_zcml = addon_dir / "src/my/pkg/configure.zcml"
+        assert_file_exists(parent_zcml, content_contains='<include package=".content" />')
+
+
+class TestContentTypeEdgeCases:
+    """Test content type edge cases and options."""
+
+    @pytest.fixture
+    def addon_dir(self, temp_dir, backend_addon_template):
+        """Create a parent addon for testing."""
+        pkg_dir = temp_dir / "mypackage"
+        run_copier(
+            backend_addon_template,
+            pkg_dir,
+            data={"package_name": "collective.mypackage"},
+        )
+        return pkg_dir
+
+    def test_creates_fti_xml(self, addon_dir, content_type_template):
+        """Content type creates FTI XML file."""
+        run_copier(
+            content_type_template,
+            addon_dir,
+            data={"content_type_name": "Article"},
+        )
+
+        fti_file = addon_dir / "src/collective/mypackage/profiles/default/types/Article.xml"
+        assert_file_exists(fti_file, content_contains=[
+            'name="Article"',
+            'meta_type="Dexterity FTI"',
+        ])
+
+    def test_fti_xml_has_correct_klass(self, addon_dir, content_type_template):
+        """FTI XML references the correct Python class."""
+        run_copier(
+            content_type_template,
+            addon_dir,
+            data={"content_type_name": "Article"},
+        )
+
+        fti_file = addon_dir / "src/collective/mypackage/profiles/default/types/Article.xml"
+        assert_file_exists(fti_file, content_contains=[
+            "collective.mypackage.content.article.Article",
+            "collective.mypackage.content.article.IArticle",
+        ])
+
+    def test_content_type_base_item(self, addon_dir, content_type_template):
+        """Content type with Item base class."""
+        run_copier(
+            content_type_template,
+            addon_dir,
+            data={
+                "content_type_name": "Document",
+                "content_type_base": "Item",
+            },
+        )
+
+        ct_file = addon_dir / "src/collective/mypackage/content/document.py"
+        assert_file_exists(ct_file, content_contains=["Item", "IDocument"])
+
+    def test_disable_dublin_core(self, addon_dir, content_type_template):
+        """Content type without Dublin Core behavior."""
+        run_copier(
+            content_type_template,
+            addon_dir,
+            data={
+                "content_type_name": "Simple",
+                "enable_dublin_core": False,
+            },
+        )
+
+        fti_file = addon_dir / "src/collective/mypackage/profiles/default/types/Simple.xml"
+        content = fti_file.read_text()
+        assert "plone.dublincore" not in content
+
+    def test_disable_navigation(self, addon_dir, content_type_template):
+        """Content type without navigation behavior."""
+        run_copier(
+            content_type_template,
+            addon_dir,
+            data={
+                "content_type_name": "Hidden",
+                "enable_navigation": False,
+            },
+        )
+
+        fti_file = addon_dir / "src/collective/mypackage/profiles/default/types/Hidden.xml"
+        content = fti_file.read_text()
+        assert "plone.excludefromnavigation" not in content

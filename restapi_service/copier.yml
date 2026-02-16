@@ -3,7 +3,9 @@ _subdirectory: template
 _answers_file: .copier-answers.restapi-service.yml
 
 _tasks:
-  - "python3 {{ _copier_conf.src_path }}/tasks.py post_copy '{{ _copier_conf.dst_path }}' '{{ service_name }}'"
+  - command: "uv run --with tomlkit python3 {{ _copier_conf.src_path }}/tasks.py validate '{{ _copier_conf.dst_path }}'"
+    when: "{{ _copier_conf.operation == 'copy' }}"
+  - "uv run --with tomlkit python3 {{ _copier_conf.src_path }}/tasks.py post_copy '{{ _copier_conf.dst_path }}' '{{ service_name }}'"
 
 # Service name
 service_name:

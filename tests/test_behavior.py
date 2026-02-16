@@ -144,3 +144,73 @@ class TestBehaviorIntegration:
         data = read_toml(pyproject)
         subtemplates = data["tool"]["plone"]["backend_addon"]["settings"]["subtemplates"]
         assert "ITaggable" in subtemplates["behaviors"]
+
+    def test_adds_parent_zcml_include(self, addon_dir, behavior_template):
+        """Behavior adds include to parent configure.zcml."""
+        run_copier(
+            behavior_template,
+            addon_dir,
+            data={
+                "behavior_name": "ITaggable",
+                "package_name": "my.pkg",
+            },
+        )
+
+        parent_zcml = addon_dir / "src/my/pkg/configure.zcml"
+        assert_file_exists(parent_zcml, content_contains='<include package=".behaviors" />')
+
+
+class TestBehaviorEdgeCases:
+    """Test behavior edge cases and options."""
+
+    @pytest.fixture
+    def addon_dir(self, temp_dir, backend_addon_template):
+        """Create a parent addon for testing."""
+        pkg_dir = temp_dir / "mypackage"
+        run_copier(
+            backend_addon_template,
+            pkg_dir,
+            data={"package_name": "collective.mypackage"},
+        )
+        return pkg_dir
+
+    def test_behavior_without_marker(self, addon_dir, behavior_template):
+        """Behavior without marker interface."""
+        run_copier(
+            behavior_template,
+            addon_dir,
+            data={
+                "behavior_name": "ISimple",
+                "package_name": "collective.mypackage",
+                "behavior_marker": False,
+            },
+        )
+
+        behavior_file = addon_dir / "src/collective/mypackage/behaviors/isimple.py"
+        content = behavior_file.read_text()
+        assert "ISimpleMarker" not in content
+
+        zcml_file = addon_dir / "src/collective/mypackage/behaviors/configure.zcml"
+        content = zcml_file.read_text()
+        assert "marker=" not in content
+
+    def test_behavior_without_factory(self, addon_dir, behavior_template):
+        """Behavior without factory/adapter."""
+        run_copier(
+            behavior_template,
+            addon_dir,
+            data={
+                "behavior_name": "ILight",
+                "package_name": "collective.mypackage",
+                "behavior_factory": False,
+            },
+        )
+
+        behavior_file = addon_dir / "src/collective/mypackage/behaviors/ilight.py"
+        content = behavior_file.read_text()
+        assert "@implementer" not in content
+        assert "@adapter" not in content
+
+        zcml_file = addon_dir / "src/collective/mypackage/behaviors/configure.zcml"
+        content = zcml_file.read_text()
+        assert "factory=" not in content
