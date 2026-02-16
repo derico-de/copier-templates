@@ -114,6 +114,43 @@ def require_clean_git(path: Path | None = None, allow_untracked: bool = True) ->
         sys.exit(1)
 
 
+def warn_git_unclean(path: Path | None = None) -> None:
+    """
+    Print warning if git repository is not clean.
+
+    Does NOT exit - just warns user. This is intended for subtemplates
+    where we want to inform users but not block them.
+
+    Args:
+        path: Directory to check (defaults to current directory)
+    """
+    status = check_git_status(path)
+
+    if not status["is_git_repo"]:
+        print("\n" + "=" * 60)
+        print("WARNING: Not a git repository!")
+        print("=" * 60)
+        print("\nIt is recommended to run templates in a git repository")
+        print("so you can easily review and revert changes.")
+        print("=" * 60 + "\n")
+        return
+
+    if not status["is_clean"]:
+        print("\n" + "=" * 60)
+        print("WARNING: Git repository has uncommitted changes!")
+        print("=" * 60)
+        print("\nIt is recommended to commit or stash changes before running templates.")
+        if status["modified_files"]:
+            print("\nModified files:")
+            for f in status["modified_files"]:
+                print(f"  - {f}")
+        if status["untracked_files"]:
+            print("\nUntracked files:")
+            for f in status["untracked_files"]:
+                print(f"  - {f}")
+        print("=" * 60 + "\n")
+
+
 if __name__ == "__main__":
     # Used as pre-copy hook
     require_clean_git()

@@ -5,6 +5,8 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
+from exceptions import AddonContextError
+
 
 def find_addon_context(start_path: Path | None = None) -> dict[str, Any] | None:
     """
@@ -73,7 +75,7 @@ def _read_addon_settings(pyproject_path: Path) -> dict[str, Any] | None:
 
 def require_addon_context(start_path: Path | None = None) -> dict[str, Any]:
     """
-    Exit with error if no parent addon found.
+    Raise AddonContextError if no parent addon found.
 
     Args:
         start_path: Directory to search in (defaults to current directory)
@@ -82,19 +84,13 @@ def require_addon_context(start_path: Path | None = None) -> dict[str, Any]:
         Dictionary with addon settings
 
     Raises:
-        SystemExit: If no parent addon is detected
+        AddonContextError: If no parent addon is detected
     """
     context = find_addon_context(start_path)
     if not context:
-        print("\n" + "=" * 60)
-        print("ERROR: No parent addon detected!")
-        print("=" * 60)
-        print("\nThis template must be run inside an existing backend_addon.")
-        print("First create an addon with:")
-        print("  copier copy gh:plone/copier-templates/backend_addon my-addon")
-        print("\nThen run this subtemplate inside that directory.")
-        print("=" * 60 + "\n")
-        sys.exit(1)
+        raise AddonContextError(
+            "No parent addon detected. This template must be run inside an existing backend_addon."
+        )
     return context
 
 
@@ -113,4 +109,15 @@ def get_package_folder(package_name: str) -> str:
 
 if __name__ == "__main__":
     # Used as pre-copy hook by subtemplates
-    require_addon_context()
+    try:
+        require_addon_context()
+    except AddonContextError as e:
+        print("\n" + "=" * 60)
+        print("ERROR: No parent addon detected!")
+        print("=" * 60)
+        print(f"\n{e}")
+        print("\nFirst create an addon with:")
+        print("  copier copy gh:plone/copier-templates/backend_addon my-addon")
+        print("\nThen run this subtemplate inside that directory.")
+        print("=" * 60 + "\n")
+        sys.exit(1)
