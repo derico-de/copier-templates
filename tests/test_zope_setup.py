@@ -52,16 +52,16 @@ class TestZopeSetupIsolated:
         settings = data["tool"]["plone"]["project"]["settings"]
         assert settings["plone_version"] == "6.1.1"
 
-    def test_creates_zope_conf_template(self, temp_dir, zope_setup_template):
-        """Zope-setup creates zope.conf template."""
+    def test_creates_zope_conf(self, temp_dir, zope_setup_template):
+        """Zope-setup creates rendered zope.conf."""
         run_copier(
             zope_setup_template,
             temp_dir / "my-project",
             data={"project_name": "my-project"},
         )
 
-        zope_conf = temp_dir / "my-project/instance/etc/zope.conf.tpl"
-        assert_file_exists(zope_conf)
+        zope_conf = temp_dir / "my-project/instance/etc/zope.conf"
+        assert_file_exists(zope_conf, content_contains="<filestorage>")
 
     def test_creates_gitignore(self, temp_dir, zope_setup_template):
         """Zope-setup creates .gitignore file."""
@@ -84,6 +84,19 @@ class TestZopeSetupIsolated:
 
         tasks = temp_dir / "my-project/tasks.py"
         assert_file_exists(tasks, content_contains="from invoke import")
+
+    def test_tasks_use_uv_run(self, temp_dir, zope_setup_template):
+        """Zope-setup tasks.py uses uv run for all commands."""
+        run_copier(
+            zope_setup_template,
+            temp_dir / "my-project",
+            data={"project_name": "my-project"},
+        )
+
+        tasks = temp_dir / "my-project/tasks.py"
+        assert_file_exists(tasks, content_contains="uv run runwsgi")
+        assert_file_exists(tasks, content_contains="uv run pytest")
+        assert_file_exists(tasks, content_contains="uv run ruff")
 
     def test_distribution_options(self, temp_dir, zope_setup_template):
         """Zope-setup handles different distribution options."""
@@ -116,6 +129,35 @@ class TestZopeSetupIsolated:
         data = read_toml(pyproject)
         settings = data["tool"]["plone"]["project"]["settings"]
         assert settings["db_storage"] == "relstorage"
+
+    def test_zope_conf_no_temporarystorage(self, temp_dir, zope_setup_template):
+        """Zope-setup does not include deprecated temporarystorage section."""
+        run_copier(
+            zope_setup_template,
+            temp_dir / "my-project",
+            data={"project_name": "my-project"},
+        )
+
+        zope_conf = temp_dir / "my-project/instance/etc/zope.conf"
+        content = zope_conf.read_text()
+        assert "temporarystorage" not in content
+        assert "temp_folder" not in content
+        assert "TemporaryContainer" not in content
+
+    def test_zope_conf_relstorage(self, temp_dir, zope_setup_template):
+        """Zope-setup renders relstorage config in zope.conf."""
+        run_copier(
+            zope_setup_template,
+            temp_dir / "my-project",
+            data={
+                "project_name": "my-project",
+                "db_storage": "relstorage",
+            },
+        )
+
+        zope_conf = temp_dir / "my-project/instance/etc/zope.conf"
+        assert_file_exists(zope_conf, content_contains="<relstorage>")
+        assert_file_exists(zope_conf, content_contains="dbname=plone_my_project")
 
     def test_creates_copier_answers_file(self, temp_dir, zope_setup_template):
         """Zope-setup creates copier answers file."""

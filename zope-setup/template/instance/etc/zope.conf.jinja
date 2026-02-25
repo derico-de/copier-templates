@@ -1,12 +1,12 @@
-%define INSTANCEHOME {{ '{{' }} INSTANCEHOME {{ '}}' }}
+%define INSTANCEHOME instance
 instancehome $INSTANCEHOME
 
-%define CLIENTHOME {{ '{{' }} CLIENTHOME {{ '}}' }}
+%define CLIENTHOME instance
 clienthome $CLIENTHOME
 
-debug-mode {{ '{{' }} DEBUG_MODE {{ '}}' }}
-security-policy-implementation {{ '{{' }} SECURITY_IMPLEMENTATION {{ '}}' }}
-verbose-security {{ '{{' }} VERBOSE_SECURITY {{ '}}' }}
+debug-mode off
+security-policy-implementation C
+verbose-security off
 
 default-zpublisher-encoding utf-8
 
@@ -22,7 +22,7 @@ default-zpublisher-encoding utf-8
 <zodb_db main>
     <relstorage>
         <postgresql>
-            dsn {{ '{{' }} RELSTORAGE_DSN {{ '}}' }}
+            dsn dbname=plone_{{ project_name | replace('-', '_') }}
         </postgresql>
         blob-dir $CLIENTHOME/var/blobs
         shared-blob-dir false
@@ -38,11 +38,3 @@ default-zpublisher-encoding utf-8
     mount-point /
 </zodb_db>
 {%- endif %}
-
-<zodb_db temporary>
-    <temporarystorage>
-        name temporary storage for sessioning
-    </temporarystorage>
-    mount-point /temp_folder
-    container-class Products.TemporaryFolder.TemporaryContainer
-</zodb_db>

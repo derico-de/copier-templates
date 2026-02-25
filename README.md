@@ -284,7 +284,7 @@ copier-templates/
 │       ├── tasks.py.jinja
 │       └── instance/
 │           └── etc/
-│               ├── zope.conf.tpl.jinja
+│               ├── zope.conf.jinja
 │               └── zope.ini.jinja
 │
 ├── backend_addon/                   # INDEPENDENT TEMPLATE
@@ -350,7 +350,7 @@ my-project/
 ├── pyproject.toml                    # Project config with [tool.plone.project.settings]
 ├── instance/
 │   └── etc/
-│       ├── zope.conf.tpl
+│       ├── zope.conf
 │       └── zope.ini
 ├── sources/
 │   └── collective.mysite/            # Addon created with backend_addon
