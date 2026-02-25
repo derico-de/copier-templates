@@ -13,7 +13,15 @@
       "WebFetch(domain:artur.wtf)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:api.github.com)",
-      "mcp__plugin_perplexity_perplexity__perplexity_ask"
+      "mcp__plugin_perplexity_perplexity__perplexity_ask",
+      "Bash(pytest:*)",
+      "Bash(copier copy --help:*)",
+      "Bash(xargs:*)",
+      "Bash(git -C /home/maik/develop/claude/copier-templates/ log --oneline -20)",
+      "WebFetch(domain:community.plone.org)",
+      "Bash(uv run pytest:*)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
     ]
   }
 }
