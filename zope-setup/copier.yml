@@ -1,6 +1,8 @@
 _min_copier_version: "9.0.0"
 _subdirectory: template
 _answers_file: .copier-answers.yml
+_exclude:
+  - "{% if _copier_operation == 'update' %}instance/inituser{% endif %}"
 
 # Project identification
 project_name:
@@ -36,6 +38,11 @@ distribution:
     - "plone.volto"
     - "plone.classicui"
 
+distribution_name:
+  type: str
+  default: "{% if distribution == 'plone.volto' %}volto{% elif distribution == 'plone.classicui' %}classic{% endif %}"
+  when: false
+
 # Database configuration
 db_storage:
   type: str
@@ -56,6 +63,18 @@ author_email:
   type: str
   help: "Author email"
   default: "dev@plone.org"
+
+# Initial Zope user
+initial_zope_username:
+  type: str
+  help: "Initial Zope username"
+  default: "admin"
+
+initial_user_password:
+  type: str
+  help: "Initial Zope password (default is admin)"
+  default: "admin"
+  secret: true
 
 # Computed values
 current_year:

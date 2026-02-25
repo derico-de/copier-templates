@@ -159,6 +159,43 @@ class TestZopeSetupIsolated:
         assert_file_exists(zope_conf, content_contains="<relstorage>")
         assert_file_exists(zope_conf, content_contains="dbname=plone_my_project")
 
+    def test_creates_inituser_with_defaults(self, temp_dir, zope_setup_template):
+        """Zope-setup creates inituser file with default credentials."""
+        run_copier(
+            zope_setup_template,
+            temp_dir / "my-project",
+            data={"project_name": "my-project"},
+        )
+
+        inituser = temp_dir / "my-project/instance/inituser"
+        assert_file_exists(inituser, content_contains="admin:admin")
+
+    def test_creates_inituser_with_custom_credentials(self, temp_dir, zope_setup_template):
+        """Zope-setup creates inituser file with custom username and password."""
+        run_copier(
+            zope_setup_template,
+            temp_dir / "my-project",
+            data={
+                "project_name": "my-project",
+                "initial_zope_username": "manager",
+                "initial_user_password": "secret123",
+            },
+        )
+
+        inituser = temp_dir / "my-project/instance/inituser"
+        assert_file_exists(inituser, content_contains="manager:secret123")
+
+    def test_gitignore_excludes_inituser(self, temp_dir, zope_setup_template):
+        """Zope-setup .gitignore excludes inituser file."""
+        run_copier(
+            zope_setup_template,
+            temp_dir / "my-project",
+            data={"project_name": "my-project"},
+        )
+
+        gitignore = temp_dir / "my-project/.gitignore"
+        assert_file_exists(gitignore, content_contains="instance/inituser")
+
     def test_creates_copier_answers_file(self, temp_dir, zope_setup_template):
         """Zope-setup creates copier answers file."""
         run_copier(

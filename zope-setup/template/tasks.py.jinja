@@ -17,7 +17,7 @@ def debug(c):
 @task
 def shell(c):
     """Open a Zope debug shell."""
-    c.run("uv run zconsole debug instance/etc/zope.ini")
+    c.run("uv run zconsole debug instance/etc/zope.conf")
 
 
 @task
@@ -32,21 +32,36 @@ def test(c, verbose=False):
 @task
 def create_site(c, site_id="Plone"):
     """Create a new Plone site."""
-    script = f'''
+    import os
+    import tempfile
+
+    script = '''
 from Testing.makerequest import makerequest
 import transaction
 app = makerequest(app)
 from plone.distribution.api import site as site_api
 site_api.create(
     app,
-    "{{ distribution }}",
-    "{site_id}",
-    title="{{ project_title }}",
+    "{{ distribution_name }}",
+    {
+        "site_id": "SITE_ID",
+        "title": "{{ project_title }}",
+        "description": "{{ project_description }}",
+        "default_language": "en",
+        "portal_timezone": "UTC",
+        "setup_content": False,
+    },
 )
 transaction.commit()
-print(f"Created site: {site_id}")
-'''
-    c.run(f'uv run zconsole run instance/etc/zope.ini -c "{script}"')
+print("Created site: SITE_ID")
+'''.replace("SITE_ID", site_id)
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        f.write(script)
+        script_path = f.name
+    try:
+        c.run(f"uv run zconsole run instance/etc/zope.conf {script_path}")
+    finally:
+        os.unlink(script_path)
 
 
 @task
