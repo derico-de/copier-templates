@@ -393,3 +393,146 @@ class TestZCMLIntegrity:
         assert "Article" in subtemplates["content_types"]
         assert "IFeatured" in subtemplates["behaviors"]
         assert "@stats" in subtemplates["services"]
+
+
+class TestZopeSetupOnAddon:
+    """Test zope-setup as subtemplate of backend_addon."""
+
+    def test_addon_then_zope_setup(
+        self, temp_dir, backend_addon_template, zope_setup_template
+    ):
+        """Zope-setup overlays onto existing addon, merging pyproject.toml."""
+        pkg_dir = temp_dir / "myaddon"
+
+        # Create addon
+        result = run_copier(
+            backend_addon_template,
+            pkg_dir,
+            data={"package_name": "collective.myaddon"},
+        )
+        assert result.returncode == 0, f"backend_addon failed: {result.stderr}"
+
+        # Apply zope-setup on same directory
+        result = run_copier(
+            zope_setup_template,
+            pkg_dir,
+            data={
+                "project_name": "collective.myaddon",
+                "distribution": "plone.classicui",
+            },
+        )
+        assert result.returncode == 0, f"zope-setup failed: {result.stderr}"
+
+        # Verify zope-setup files exist
+        assert_dir_exists(pkg_dir / "instance")
+        assert_file_exists(pkg_dir / "instance/etc/zope.conf")
+        assert_file_exists(pkg_dir / "instance/etc/zope.ini")
+        assert_file_exists(pkg_dir / "tasks.py")
+        assert_file_exists(pkg_dir / ".copier-answers.zope-setup.yml")
+
+        # Verify pyproject.toml integrity
+        data = read_toml(pkg_dir / "pyproject.toml")
+
+        # Original addon settings preserved
+        assert "backend_addon" in data["tool"]["plone"]
+        addon_settings = data["tool"]["plone"]["backend_addon"]["settings"]
+        assert addon_settings["package_name"] == "collective.myaddon"
+        assert addon_settings["zope_setup"] is True
+
+        # Project settings added
+        assert "project" in data["tool"]["plone"]
+        project_settings = data["tool"]["plone"]["project"]["settings"]
+        assert project_settings["plone_version"] == "6.1.1"
+        assert project_settings["distribution"] == "plone.classicui"
+
+        # [tool.uv] section added
+        assert "uv" in data["tool"]
+        assert "constraint-dependencies" in data["tool"]["uv"]
+
+        # Dependencies added
+        deps = data["project"]["dependencies"]
+        assert "plone.classicui" in deps
+        assert "Paste" in deps
+        assert "plone.app.caching" in deps
+
+        # Original addon deps preserved
+        assert any("Plone" in d for d in deps)
+        assert "setuptools" in deps
+
+    def test_addon_then_zope_then_content_type(
+        self,
+        temp_dir,
+        backend_addon_template,
+        zope_setup_template,
+        content_type_template,
+    ):
+        """Full workflow: addon + zope-setup + content_type still works."""
+        pkg_dir = temp_dir / "myaddon"
+
+        # Create addon
+        run_copier(
+            backend_addon_template,
+            pkg_dir,
+            data={"package_name": "collective.myaddon"},
+        )
+
+        # Apply zope-setup
+        run_copier(
+            zope_setup_template,
+            pkg_dir,
+            data={
+                "project_name": "collective.myaddon",
+                "distribution": "plone.volto",
+            },
+        )
+
+        # Apply content_type subtemplate
+        result = run_copier(
+            content_type_template,
+            pkg_dir,
+            data={
+                "content_type_name": "Article",
+                "package_name": "collective.myaddon",
+            },
+        )
+        assert result.returncode == 0, f"content_type failed: {result.stderr}"
+
+        # Verify content type exists
+        assert_file_exists(pkg_dir / "src/collective/myaddon/content/article.py")
+
+        # Verify all settings intact
+        data = read_toml(pkg_dir / "pyproject.toml")
+        assert data["tool"]["plone"]["backend_addon"]["settings"]["zope_setup"] is True
+        subtemplates = data["tool"]["plone"]["backend_addon"]["settings"]["subtemplates"]
+        assert "Article" in subtemplates["content_types"]
+
+    def test_standalone_zope_setup_still_works(self, temp_dir, zope_setup_template):
+        """Standalone zope-setup still produces correct structure."""
+        project_dir = temp_dir / "my-project"
+
+        result = run_copier(
+            zope_setup_template,
+            project_dir,
+            data={"project_name": "my-project"},
+        )
+        assert result.returncode == 0, f"zope-setup failed: {result.stderr}"
+
+        # Verify standard structure
+        assert_file_exists(project_dir / "pyproject.toml")
+        assert_file_exists(project_dir / "tasks.py")
+        assert_dir_exists(project_dir / "instance")
+        assert_dir_exists(project_dir / "sources")
+
+        # Verify install task present
+        assert_file_exists(project_dir / "tasks.py", content_contains="def install")
+
+        # Verify [tool.uv] section
+        data = read_toml(project_dir / "pyproject.toml")
+        assert "uv" in data["tool"]
+        assert "constraint-dependencies" in data["tool"]["uv"]
+
+        # Verify project settings
+        assert "project" in data["tool"]["plone"]
+        settings = data["tool"]["plone"]["project"]["settings"]
+        assert settings["plone_version"] == "6.1.1"
+        assert settings["distribution"] == "plone.volto"

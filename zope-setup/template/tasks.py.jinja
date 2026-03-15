@@ -3,6 +3,12 @@ from invoke import task
 
 
 @task
+def install(c):
+    """Install project dependencies."""
+    c.run("uv sync")
+
+
+@task
 def start(c):
     """Start the Plone instance."""
     c.run("uv run runwsgi instance/etc/zope.ini")

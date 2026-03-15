@@ -204,7 +204,7 @@ class TestZopeSetupIsolated:
             data={"project_name": "my-project"},
         )
 
-        answers = temp_dir / "my-project/.copier-answers.yml"
+        answers = temp_dir / "my-project/.copier-answers.zope-setup.yml"
         assert_file_exists(answers)
 
 

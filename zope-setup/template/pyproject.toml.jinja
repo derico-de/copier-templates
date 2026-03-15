@@ -50,6 +50,9 @@ distribution = "{{ distribution }}"
 db_storage = "{{ db_storage }}"
 created_at = "{{ current_date }}"
 
+[tool.uv]
+constraint-dependencies = []
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
