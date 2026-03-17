@@ -4,11 +4,15 @@
 		"dockerfile": "Dockerfile",
 		"args": {
 			"TZ": "${localEnv:TZ:America/Los_Angeles}",
-			"CLAUDE_CODE_VERSION": "latest",
 			"GIT_DELTA_VERSION": "0.18.2",
 			"ZSH_IN_DOCKER_VERSION": "1.2.0"
 		}
 	},
+
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
+	},
+
 	"runArgs": ["--cap-add=NET_ADMIN", "--cap-add=NET_RAW"],
 	"customizations": {
 		"vscode": {
@@ -16,7 +20,8 @@
 				"anthropic.claude-code",
 				"dbaeumer.vscode-eslint",
 				"esbenp.prettier-vscode",
-				"eamodio.gitlens"
+				"eamodio.gitlens",
+				"ms-python.python"
 			],
 			"settings": {
 				"editor.formatOnSave": true,
@@ -44,11 +49,13 @@
 	],
 	"containerEnv": {
 		"CLAUDE_CONFIG_DIR": "/home/node/.claude",
-		"POWERLEVEL9K_DISABLE_GITSTATUS": "true"
+		"POWERLEVEL9K_DISABLE_GITSTATUS": "true",
+		"CHROME_PATH": "/usr/bin/chromium",
+		"PUPPETEER_EXECUTABLE_PATH": "/usr/bin/chromium"
 	},
 	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
 	"workspaceFolder": "/workspace",
-	"onCreateCommand": "uv sync --extra dev && uv build",
+	"postCreateCommand": "/usr/local/bin/setup-claude.sh",
 	"postStartCommand": "sudo /usr/local/bin/init-firewall.sh",
 	"waitFor": "postStartCommand"
 }

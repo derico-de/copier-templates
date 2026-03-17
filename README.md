@@ -11,7 +11,12 @@ INDEPENDENT TEMPLATES:
 ├── zope-setup              → Creates Plone/Zope project structure
 └── backend_addon           → Creates standalone addon package
 
-SUBTEMPLATES (require backend_addon):
+zope-setup and backend_addon can be used in combination to create a self contained addon:
+
+1. create a backend_addon for example collect.todos
+2. in the addon dir "collective.todos" create a zope-setup with a simple instance with direct storage
+
+SUBTEMPLATES (used inside a package created via backend_addon template):
 ├── content_type            → Adds Dexterity content type to addon
 ├── behavior                → Adds Dexterity behavior to addon
 └── restapi_service         → Adds REST API endpoint to addon
