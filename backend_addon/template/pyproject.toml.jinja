@@ -58,6 +58,8 @@ packages = ["src/{{ package_folder.split('/')[0] }}"]
 
 [tool.plone.backend_addon.settings]
 package_name = "{{ package_name }}"
+package_title = "{{ package_title }}"
+package_description = "{{ package_description }}"
 package_folder = "{{ package_folder }}"
 plone_version = "{{ plone_version }}"
 is_headless = {{ is_headless | lower }}

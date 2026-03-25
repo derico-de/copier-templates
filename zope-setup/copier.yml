@@ -4,6 +4,10 @@ _answers_file: .copier-answers.zope-setup.yml
 _exclude:
   - "{% if _copier_operation == 'update' %}instance/inituser{% endif %}"
 
+_jinja_extensions:
+  - copier_template_extensions.TemplateExtensionLoader
+  - extensions.py:AddonContextHook
+
 _skip_if_exists:
   - pyproject.toml
   - README.md
@@ -15,17 +19,21 @@ _tasks:
 project_name:
   type: str
   help: "Project name (used for directory and package naming)"
+  default: "{{ addon_context.package_name | default('') }}"
   validator: "{% if not project_name %}Project name is required{% endif %}"
+  when: "{{ not addon_context }}"
 
 project_title:
   type: str
   help: "Human-readable project title"
-  default: "{{ project_name | replace('-', ' ') | title }}"
+  default: "{{ addon_context.package_title | default(project_name | replace('-', ' ') | title) }}"
+  when: "{{ not addon_context }}"
 
 project_description:
   type: str
   help: "Short description of the project"
-  default: "A Plone project"
+  default: "{{ addon_context.package_description | default('A Plone project') }}"
+  when: "{{ not addon_context }}"
 
 # Plone configuration
 plone_version:

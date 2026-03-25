@@ -22,6 +22,7 @@ classifiers = [
 [project.optional-dependencies]
 dev = [
     "copier>=9.0.0",
+    "copier-template-extensions>=0.3.0",
     "pytest>=8.0.0",
     "pytest-cov>=4.0.0",
     "tomlkit>=0.12.0",

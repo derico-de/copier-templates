@@ -11,10 +11,11 @@ INDEPENDENT TEMPLATES:
 ├── zope-setup              → Creates Plone/Zope project structure
 └── backend_addon           → Creates standalone addon package
 
-zope-setup and backend_addon can be used in combination to create a self contained addon:
+zope-setup and backend_addon can be used in combination to create a self-contained addon:
 
-1. create a backend_addon for example collect.todos
-2. in the addon dir "collective.todos" create a zope-setup with a simple instance with direct storage
+1. create a backend_addon, e.g. collective.todos
+2. in the addon dir "collective.todos" run zope-setup — project name, title, and
+   description are automatically inherited from the addon
 
 SUBTEMPLATES (used inside a package created via backend_addon template):
 ├── content_type            → Adds Dexterity content type to addon
@@ -26,11 +27,12 @@ SUBTEMPLATES (used inside a package created via backend_addon template):
 
 - Python 3.10+
 - [Copier](https://copier.readthedocs.io/) 9.0.0+
+- [copier-template-extensions](https://github.com/copier-org/copier-template-extensions) (for zope-setup addon detection)
 
 ## Installation
 
 ```bash
-uv tool install copier
+uv tool install copier --with copier-template-extensions
 ```
 
 ## Quick Start
@@ -77,14 +79,15 @@ Creates a complete Plone/Zope project structure with:
 - Invoke tasks for common operations
 - GitHub Actions CI workflow
 - Project settings in `[tool.plone.project.settings]`
+- Automatic addon context detection: when run inside a `backend_addon` package, `project_name`, `project_title`, and `project_description` are inherited from the addon's `pyproject.toml` settings
 
 **Options:**
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `project_name` | Project name | (required) |
-| `project_title` | Human-readable title | Auto-generated |
-| `project_description` | Short project description | `A Plone project` |
+| `project_name` | Project name | Auto-detected from addon or required |
+| `project_title` | Human-readable title | Auto-detected from addon or auto-generated |
+| `project_description` | Short project description | Auto-detected from addon or `A Plone project` |
 | `plone_version` | Plone version | `6.1.1` |
 | `distribution` | Plone distribution | `plone.volto` |
 | `db_storage` | Database backend | `direct` |
@@ -240,6 +243,8 @@ created_at = "2024-01-18"
 ```toml
 [tool.plone.backend_addon.settings]
 package_name = "collective.mypackage"
+package_title = "Collective Mypackage"
+package_description = "A Plone addon package"
 package_folder = "collective/mypackage"
 plone_version = "6.1"
 is_headless = false
@@ -290,6 +295,7 @@ copier-templates/
 │
 ├── zope-setup/                      # INDEPENDENT TEMPLATE
 │   ├── copier.yml
+│   ├── extensions.py                # Jinja2 extension for addon context detection
 │   └── template/
 │       ├── {{_copier_conf.answers_file}}.jinja
 │       ├── README.md.jinja

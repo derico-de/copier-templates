@@ -412,12 +412,11 @@ class TestZopeSetupOnAddon:
         )
         assert result.returncode == 0, f"backend_addon failed: {result.stderr}"
 
-        # Apply zope-setup on same directory
+        # Apply zope-setup on same directory (project_name auto-detected from addon)
         result = run_copier(
             zope_setup_template,
             pkg_dir,
             data={
-                "project_name": "collective.myaddon",
                 "distribution": "plone.classicui",
             },
         )
@@ -476,12 +475,11 @@ class TestZopeSetupOnAddon:
             data={"package_name": "collective.myaddon"},
         )
 
-        # Apply zope-setup
+        # Apply zope-setup (project_name auto-detected from addon)
         run_copier(
             zope_setup_template,
             pkg_dir,
             data={
-                "project_name": "collective.myaddon",
                 "distribution": "plone.volto",
             },
         )
@@ -505,6 +503,43 @@ class TestZopeSetupOnAddon:
         assert data["tool"]["plone"]["backend_addon"]["settings"]["zope_setup"] is True
         subtemplates = data["tool"]["plone"]["backend_addon"]["settings"]["subtemplates"]
         assert "Article" in subtemplates["content_types"]
+
+    def test_addon_context_values_in_generated_files(
+        self, temp_dir, backend_addon_template, zope_setup_template
+    ):
+        """Auto-detected project_name/title/description appear in generated files."""
+        pkg_dir = temp_dir / "myaddon"
+
+        # Create addon with specific title and description
+        result = run_copier(
+            backend_addon_template,
+            pkg_dir,
+            data={
+                "package_name": "collective.myaddon",
+                "package_title": "My Custom Addon",
+                "package_description": "A custom addon for testing",
+            },
+        )
+        assert result.returncode == 0, f"backend_addon failed: {result.stderr}"
+
+        # Apply zope-setup (should auto-detect from addon)
+        result = run_copier(
+            zope_setup_template,
+            pkg_dir,
+            data={
+                "distribution": "plone.classicui",
+            },
+        )
+        assert result.returncode == 0, f"zope-setup failed: {result.stderr}"
+
+        # Verify tasks.py has correct values from addon
+        assert_file_exists(
+            pkg_dir / "tasks.py",
+            content_contains=[
+                "My Custom Addon",
+                "A custom addon for testing",
+            ],
+        )
 
     def test_standalone_zope_setup_still_works(self, temp_dir, zope_setup_template):
         """Standalone zope-setup still produces correct structure."""
