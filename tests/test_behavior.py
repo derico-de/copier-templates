@@ -213,3 +213,43 @@ class TestBehaviorEdgeCases:
         zcml_file = addon_dir / "src/collective/mypackage/behaviors/configure.zcml"
         content = zcml_file.read_text()
         assert "factory=" not in content
+
+    def test_existing_init_py_not_overwritten(self, addon_dir, behavior_template):
+        """Pre-existing behaviors/__init__.py is preserved when adding a behavior."""
+        init_file = addon_dir / "src/collective/mypackage/behaviors/__init__.py"
+        init_file.parent.mkdir(parents=True, exist_ok=True)
+        init_file.write_text("# user content\n")
+
+        run_copier(
+            behavior_template,
+            addon_dir,
+            data={
+                "behavior_name": "IKeep",
+                "package_name": "collective.mypackage",
+            },
+        )
+
+        assert init_file.read_text() == "# user content\n"
+
+    def test_marker_and_factory_default_true_when_hidden(
+        self, addon_dir, behavior_template
+    ):
+        """Hidden marker/factory questions still default to true."""
+        run_copier(
+            behavior_template,
+            addon_dir,
+            data={
+                "behavior_name": "IDefault",
+                "package_name": "collective.mypackage",
+            },
+        )
+
+        behavior_file = addon_dir / "src/collective/mypackage/behaviors/idefault.py"
+        content = behavior_file.read_text()
+        assert "IDefaultMarker" in content
+        assert "@implementer" in content
+
+        zcml_file = addon_dir / "src/collective/mypackage/behaviors/configure.zcml"
+        zcml_content = zcml_file.read_text()
+        assert "marker=" in zcml_content
+        assert "factory=" in zcml_content
