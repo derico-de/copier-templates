@@ -8,9 +8,28 @@ _plonecli:
   description: "Add a custom catalog indexer (@indexer function)"
 
 _tasks:
-  - command: "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py validate '{{ _copier_conf.dst_path }}'"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "validate"
+      - "{{ _copier_conf.dst_path }}"
     when: "{{ _copier_conf.operation == 'copy' }}"
-  - "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py post_copy '{{ _copier_conf.dst_path }}' '{{ indexer_name }}'"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "post_copy"
+      - "{{ _copier_conf.dst_path }}"
+      - "{{ indexer_name }}"
 
 # Indexer name (snake_case, valid Python identifier)
 indexer_name:

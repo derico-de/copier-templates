@@ -8,9 +8,28 @@ _plonecli:
   description: "Add a full Diazo-based Plone theme (scss partials + webpack)"
 
 _tasks:
-  - command: "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py validate '{{ _copier_conf.dst_path }}'"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "validate"
+      - "{{ _copier_conf.dst_path }}"
     when: "{{ _copier_conf.operation == 'copy' }}"
-  - "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py post_copy '{{ _copier_conf.dst_path }}' '{{ theme_name }}'"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "post_copy"
+      - "{{ _copier_conf.dst_path }}"
+      - "{{ theme_name }}"
 
 theme_name:
   type: str

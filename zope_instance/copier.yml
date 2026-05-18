@@ -12,8 +12,28 @@ _jinja_extensions:
   - extensions.py:ProjectContextHook
 
 _tasks:
-  - "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py validate '{{ _copier_conf.dst_path }}'"
-  - "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py post_copy '{{ _copier_conf.dst_path }}' '{{ instance_name }}' --port={{ port }}"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "validate"
+      - "{{ _copier_conf.dst_path }}"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "post_copy"
+      - "{{ _copier_conf.dst_path }}"
+      - "{{ instance_name }}"
+      - "--port={{ port }}"
 
 # Instance identification
 instance_name:

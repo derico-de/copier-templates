@@ -12,11 +12,38 @@ _plonecli:
   description: "Add a BrowserView (with optional page template)"
 
 _tasks:
-  - command: "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py validate '{{ _copier_conf.dst_path }}'"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "validate"
+      - "{{ _copier_conf.dst_path }}"
     when: "{{ _copier_conf.operation == 'copy' }}"
-  - command: "rm -f '{{ _copier_conf.dst_path }}/src/{{ package_folder }}/views/{{ view_module }}.pt'"
+  - command:
+      - "rm"
+      - "-f"
+      - "{{ _copier_conf.dst_path }}/src/{{ package_folder }}/views/{{ view_module }}.pt"
     when: "{{ not view_template }}"
-  - "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py post_copy '{{ _copier_conf.dst_path }}' '{{ view_name }}' '{{ view_for_interface }}' '{{ view_module }}' '{{ view_class_name }}' '{{ view_template }}' '{{ view_marker }}'"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "post_copy"
+      - "{{ _copier_conf.dst_path }}"
+      - "{{ view_name }}"
+      - "{{ view_for_interface }}"
+      - "{{ view_module }}"
+      - "{{ view_class_name }}"
+      - "{{ view_template }}"
+      - "{{ view_marker }}"
 
 # URL identifier for the view
 view_name:

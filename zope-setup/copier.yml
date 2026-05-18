@@ -17,8 +17,40 @@ _skip_if_exists:
   - README.md
 
 _tasks:
-  - "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py update_pyproject '{{ _copier_conf.dst_path }}' --plone-version={{ plone_version }} --distribution={{ distribution }} --db-storage={{ db_storage }} --base-path={{ base_path }}"
-  - "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py create_initial_instance '{{ _copier_conf.dst_path }}' --db-storage={{ db_storage }} --base-path={{ base_path }} --initial-zope-username={{ initial_zope_username }} --initial-user-password={{ initial_user_password }}{% if db_storage == 'zeo' %} --zeo-address={{ zeo_address }}{% endif %}{% if db_storage == 'relstorage' %} --pg-host={{ pg_host }} --pg-port={{ pg_port }} --pg-dbname={{ pg_dbname }} --pg-user={{ pg_user }}{% if pg_password %} --pg-password={{ pg_password }}{% endif %}{% endif %}"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "update_pyproject"
+      - "{{ _copier_conf.dst_path }}"
+      - "--plone-version={{ plone_version }}"
+      - "--distribution={{ distribution }}"
+      - "--db-storage={{ db_storage }}"
+      - "--base-path={{ base_path }}"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "create_initial_instance"
+      - "{{ _copier_conf.dst_path }}"
+      - "--db-storage={{ db_storage }}"
+      - "--base-path={{ base_path }}"
+      - "--initial-zope-username={{ initial_zope_username }}"
+      - "--initial-user-password={{ initial_user_password }}"
+      - "--zeo-address={{ zeo_address }}"
+      - "--pg-host={{ pg_host }}"
+      - "--pg-port={{ pg_port }}"
+      - "--pg-dbname={{ pg_dbname }}"
+      - "--pg-user={{ pg_user }}"
+      - "--pg-password={{ pg_password }}"
 
 # Project identification
 project_name:

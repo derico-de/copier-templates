@@ -17,7 +17,16 @@ _skip_if_exists:
   - "src/**/profiles/default/metadata.xml"
 
 _tasks:
-  - "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py post_copy '{{ _copier_conf.dst_path }}'"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "post_copy"
+      - "{{ _copier_conf.dst_path }}"
 
 # Package identification
 package_name:

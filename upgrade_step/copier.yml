@@ -12,9 +12,31 @@ _jinja_extensions:
   - extensions.py:AddonContextHook
 
 _tasks:
-  - command: "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py validate '{{ _copier_conf.dst_path }}'"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "validate"
+      - "{{ _copier_conf.dst_path }}"
     when: "{{ _copier_conf.operation == 'copy' }}"
-  - "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py post_copy '{{ _copier_conf.dst_path }}' '{{ upgrade_step_title }}' '{{ upgrade_step_description }}' '{{ source_version }}' '{{ destination_version }}'"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "post_copy"
+      - "{{ _copier_conf.dst_path }}"
+      - "{{ upgrade_step_title }}"
+      - "{{ upgrade_step_description }}"
+      - "{{ source_version }}"
+      - "{{ destination_version }}"
 
 # Upgrade step title
 upgrade_step_title:
