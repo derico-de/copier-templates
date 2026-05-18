@@ -20,7 +20,7 @@ Each template has its own README with full documentation. See the individual tem
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.11+ (tested on 3.11, 3.12, 3.13)
 - [Copier](https://copier.readthedocs.io/) 9.0.0+
 - [copier-template-extensions](https://github.com/copier-org/copier-template-extensions)
 
