@@ -8,9 +8,30 @@ _plonecli:
   description: "Add a zope event subscriber (handler)"
 
 _tasks:
-  - command: "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py validate '{{ _copier_conf.dst_path }}'"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "validate"
+      - "{{ _copier_conf.dst_path }}"
     when: "{{ _copier_conf.operation == 'copy' }}"
-  - "uv run --no-project --with tomlkit python3 {{ _copier_conf.src_path }}/copier_hooks.py post_copy '{{ _copier_conf.dst_path }}' '{{ subscriber_handler_name }}' '{{ subscriber_for }}' '{{ subscriber_event }}'"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "post_copy"
+      - "{{ _copier_conf.dst_path }}"
+      - "{{ subscriber_handler_name }}"
+      - "{{ subscriber_for }}"
+      - "{{ subscriber_event }}"
 
 # Handler file / function name (snake_case)
 subscriber_handler_name:
