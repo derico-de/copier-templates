@@ -51,3 +51,4 @@ tmp/
 *.tmp
 /CLAUDE.md
 .claude/settings.*
+/.claude/scheduled_tasks.lock
