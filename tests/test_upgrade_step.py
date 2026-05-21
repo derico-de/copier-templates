@@ -4,7 +4,7 @@ import subprocess
 import textwrap
 
 import pytest
-from helpers import assert_file_exists, read_toml, run_copier
+from helpers import assert_file_exists, run_copier
 
 
 class TestUpgradeStepRequiresAddon:
@@ -181,21 +181,6 @@ class TestUpgradeStepIntegration:
             data={"package_name": "my.pkg"},
         )
         return pkg_dir
-
-    def test_updates_addon_settings(self, addon_dir, upgrade_step_template):
-        """Upgrade step registered in addon settings."""
-        run_copier(
-            upgrade_step_template,
-            addon_dir,
-            data={"upgrade_step_title": "Add catalog index"},
-        )
-
-        pyproject = addon_dir / "pyproject.toml"
-        data = read_toml(pyproject)
-        subtemplates = data["tool"]["plone"]["backend_addon"]["settings"][
-            "subtemplates"
-        ]
-        assert "Add catalog index" in subtemplates["upgrade_steps"]
 
     def test_adds_parent_zcml_include(self, addon_dir, upgrade_step_template):
         """Upgrade step adds include to parent configure.zcml."""

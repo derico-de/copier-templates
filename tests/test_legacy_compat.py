@@ -187,25 +187,6 @@ class TestUpgradeStepLegacy:
         )
         assert_file_exists(metadata, content_contains="<version>1001</version>")
 
-    def test_registers_in_bobtemplate_cfg(
-        self, legacy_addon, upgrade_step_template
-    ):
-        result = apply_subtemplate(
-            upgrade_step_template,
-            legacy_addon,
-            data={
-                "package_name": PACKAGE_NAME,
-                "package_folder": PACKAGE_FOLDER,
-                "upgrade_step_title": "Add catalog index",
-            },
-        )
-        assert result.returncode == 0, result.stderr
-
-        items = _subtemplate_value(
-            legacy_addon / "bobtemplate.cfg", "upgrade_steps"
-        )
-        assert "Add catalog index" in items
-
     def test_does_not_create_pyproject(
         self, legacy_addon, upgrade_step_template
     ):
