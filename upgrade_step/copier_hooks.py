@@ -59,12 +59,6 @@ def post_copy(
         print("Warning: could not determine package_folder. Skipping updates.")
         return
 
-    if ctx.register_subtemplate("upgrade_steps", upgrade_step_title):
-        print(
-            f"Registered upgrade step '{upgrade_step_title}' in "
-            f"addon settings."
-        )
-
     # Add include for per-step ZCML in upgrades/configure.zcml
     zcml_path = ctx.dest / f"src/{ctx.package_folder}/upgrades/configure.zcml"
     zcml_updater = UpgradeZCMLUpdater(zcml_path)

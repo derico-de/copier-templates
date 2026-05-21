@@ -19,7 +19,6 @@ copier copy path/to/upgrade_step .
 
 - `profiles/default/metadata.xml` — bumps profile version to the destination version
 - `configure.zcml` — adds `<include package=".upgrades" />` if not present
-- `pyproject.toml` — registers upgrade step in addon settings
 
 ## Questions
 
