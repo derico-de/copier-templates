@@ -1,7 +1,9 @@
 """Tests for {{ view_class_name }} view."""
 import pytest
 
+{%- if not view_test_use_site_root | default(false) %}
 from plone import api
+{%- endif %}
 from plone.app.testing import setRoles
 from plone.app.testing import TEST_USER_ID
 from zope.component import getMultiAdapter
@@ -22,18 +24,23 @@ class TestView{{ view_class_name }}:
     def _setup(self, integration):
         self.portal = integration["portal"]
         setRoles(self.portal, TEST_USER_ID, ["Manager"])
-        self.doc = api.content.create(
+{%- if view_test_use_site_root | default(false) %}
+        # View is registered for the Plone site root.
+        self.context = self.portal
+{%- else %}
+        self.context = api.content.create(
             container=self.portal,
-            type="Document",
-            id="test-doc",
-            title="Test Document",
+            type="{{ view_test_type | default('Document') }}",
+            id="{{ view_test_id | default('test-document') }}",
+            title="{{ view_test_title | default('Test Document') }}",
         )
+{%- endif %}
 
     def test_view_registered(self):
         """Test view is registered."""
         request = TestRequest()
         view = getMultiAdapter(
-            (self.doc, request),
+            (self.context, request),
             name="{{ view_name }}",
         )
         assert view is not None
@@ -42,7 +49,7 @@ class TestView{{ view_class_name }}:
         """Test view __name__."""
         request = TestRequest()
         view = getMultiAdapter(
-            (self.doc, request),
+            (self.context, request),
             name="{{ view_name }}",
         )
         assert view.__name__ == "{{ view_name }}"
@@ -52,7 +59,7 @@ class TestView{{ view_class_name }}:
         """Test view provides marker interface."""
         request = TestRequest()
         view = getMultiAdapter(
-            (self.doc, request),
+            (self.context, request),
             name="{{ view_name }}",
         )
         assert I{{ view_class_name }}.providedBy(view)

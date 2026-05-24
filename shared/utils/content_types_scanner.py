@@ -22,6 +22,27 @@ DEFAULT_PORTAL_TYPES: list[str] = [
     "Collection",
 ]
 
+# Map default Plone content type interfaces to the portal type a test should
+# create when a view/viewlet is registered for that interface.
+DEFAULT_INTERFACE_PORTAL_TYPES: dict[str, str] = {
+    "plone.app.contenttypes.interfaces.IDocument": "Document",
+    "plone.app.contenttypes.interfaces.IFile": "File",
+    "plone.app.contenttypes.interfaces.IImage": "Image",
+    "plone.app.contenttypes.interfaces.INewsItem": "News Item",
+    "plone.app.contenttypes.interfaces.IEvent": "Event",
+    "plone.app.contenttypes.interfaces.ILink": "Link",
+    "plone.app.contenttypes.interfaces.IFolder": "Folder",
+    "plone.app.contenttypes.interfaces.ICollection": "Collection",
+    "plone.dexterity.interfaces.IDexterityContainer": "Folder",
+    "plone.dexterity.interfaces.IDexterityItem": "Document",
+    "plone.dexterity.interfaces.IDexterityContent": "Document",
+    "Products.CMFCore.interfaces.IContentish": "Document",
+    "Products.CMFCore.interfaces.IFolderish": "Folder",
+}
+
+# Interface whose context is the Plone site root itself (no content to create).
+SITE_ROOT_INTERFACE = "Products.CMFPlone.interfaces.IPloneSiteRoot"
+
 # Default Plone content type interfaces that are always available
 # regardless of what the current package provides.
 DEFAULT_CONTENT_TYPE_INTERFACES: list[str] = [
@@ -145,6 +166,56 @@ def all_content_type_interfaces(
             seen.add(item)
             combined.append(item)
     return combined
+
+
+def scan_package_interface_portal_types(
+    dest: Path, package_folder: str | None = None
+) -> dict[str, str]:
+    """Map schema interface dotted name -> portal type for package content types.
+
+    Reads every ``src/{package_folder}/profiles/default/types/*.xml`` FTI and
+    pairs its ``schema`` property (the dotted interface) with its ``name``
+    attribute (the registered portal type).
+    """
+    dest = Path(dest)
+    if package_folder is None:
+        package_folder = _package_folder_from_pyproject(dest)
+    if not package_folder:
+        return {}
+
+    types_dir = dest / "src" / package_folder / "profiles" / "default" / "types"
+    if not types_dir.is_dir():
+        return {}
+
+    mapping: dict[str, str] = {}
+    for xml_file in sorted(types_dir.glob("*.xml")):
+        try:
+            root = ET.parse(xml_file).getroot()
+        except ET.ParseError:
+            continue
+        portal_type = root.get("name")
+        if not portal_type:
+            continue
+        for prop in root.findall("property"):
+            if prop.get("name") == "schema" and (prop.text or "").strip():
+                mapping[prop.text.strip()] = portal_type
+                break
+    return mapping
+
+
+def portal_type_for_interface(
+    interface: str, dest: Path, package_folder: str | None = None
+) -> str | None:
+    """Resolve a content type interface to the portal type to create in tests.
+
+    Returns the matching portal type name, or ``None`` when the interface is
+    ``*``/site root/unknown and the caller should fall back to a default.
+    """
+    if not interface or interface in ("*", SITE_ROOT_INTERFACE):
+        return None
+    if interface in DEFAULT_INTERFACE_PORTAL_TYPES:
+        return DEFAULT_INTERFACE_PORTAL_TYPES[interface]
+    return scan_package_interface_portal_types(dest, package_folder).get(interface)
 
 
 def scan_package_portal_types(

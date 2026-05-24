@@ -162,6 +162,97 @@ class TestViewIntegration:
         assert zcml.read_text().count('name="view"') == 1
 
 
+class TestViewGeneratedTestAdaptsRegisteredType:
+    """The generated test must create the type the view is registered for."""
+
+    def _generated_test(self, addon, module="my_view"):
+        return addon / f"tests/test_view_{module}.py"
+
+    def test_default_for_any_uses_document(self, fresh_addon, view_template):
+        result = apply_subtemplate(
+            view_template,
+            fresh_addon,
+            data={
+                "view_name": "my-view",
+                "view_class_name": "MyView",
+                "package_name": "collective.mypackage",
+            },
+        )
+        assert result.returncode == 0, f"copier failed: {result.stderr}"
+        content = self._generated_test(fresh_addon).read_text()
+        assert 'type="Document"' in content
+
+    @pytest.mark.parametrize(
+        "view_for,portal_type",
+        [
+            ("plone.app.contenttypes.interfaces.INewsItem", "News Item"),
+            ("plone.app.contenttypes.interfaces.IFolder", "Folder"),
+            ("plone.app.contenttypes.interfaces.IFile", "File"),
+        ],
+    )
+    def test_default_interface_uses_matching_type(
+        self, fresh_addon, view_template, view_for, portal_type
+    ):
+        result = apply_subtemplate(
+            view_template,
+            fresh_addon,
+            data={
+                "view_name": "my-view",
+                "view_class_name": "MyView",
+                "view_for": view_for,
+                "package_name": "collective.mypackage",
+            },
+        )
+        assert result.returncode == 0, f"copier failed: {result.stderr}"
+        content = self._generated_test(fresh_addon).read_text()
+        assert f'type="{portal_type}"' in content
+        assert 'type="Document"' not in content
+
+    def test_site_root_adapts_portal(self, fresh_addon, view_template):
+        result = apply_subtemplate(
+            view_template,
+            fresh_addon,
+            data={
+                "view_name": "root-view",
+                "view_class_name": "RootView",
+                "view_for": "Products.CMFPlone.interfaces.IPloneSiteRoot",
+                "package_name": "collective.mypackage",
+            },
+        )
+        assert result.returncode == 0, f"copier failed: {result.stderr}"
+        content = self._generated_test(fresh_addon, "root_view").read_text()
+        assert "self.context = self.portal" in content
+        assert "api.content.create" not in content
+        assert "from plone import api" not in content
+
+    def test_package_content_type_uses_its_portal_type(
+        self, fresh_addon, view_template, content_type_template
+    ):
+        ct = apply_subtemplate(
+            content_type_template,
+            fresh_addon,
+            data={
+                "content_type_name": "Talk",
+                "package_name": "collective.mypackage",
+            },
+        )
+        assert ct.returncode == 0, f"content_type failed: {ct.stderr}"
+        result = apply_subtemplate(
+            view_template,
+            fresh_addon,
+            data={
+                "view_name": "talk-view",
+                "view_class_name": "TalkView",
+                "view_for": "collective.mypackage.content.talk.ITalk",
+                "package_name": "collective.mypackage",
+            },
+        )
+        assert result.returncode == 0, f"copier failed: {result.stderr}"
+        content = self._generated_test(fresh_addon, "talk_view").read_text()
+        assert 'type="Talk"' in content
+        assert 'type="Document"' not in content
+
+
 class TestViewEdgeCases:
     def test_without_template(self, fresh_addon, view_template):
         result = apply_subtemplate(
