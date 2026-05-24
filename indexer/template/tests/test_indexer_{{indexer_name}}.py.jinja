@@ -13,8 +13,8 @@ class TestIndexer{{ indexer_name | replace('_', ' ') | title | replace(' ', '') 
     layer = INTEGRATION_TESTING
 
     @pytest.fixture(autouse=True)
-    def _setup(self, integration_testing):
-        self.portal = integration_testing["portal"]
+    def _setup(self, integration):
+        self.portal = integration["portal"]
         setRoles(self.portal, TEST_USER_ID, ["Manager"])
 
     def test_indexer_registered(self):

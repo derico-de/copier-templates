@@ -14,8 +14,8 @@ class TestVocabulary{{ vocabulary_class }}:
     layer = INTEGRATION_TESTING
 
     @pytest.fixture(autouse=True)
-    def _setup(self, integration_testing):
-        self.portal = integration_testing["portal"]
+    def _setup(self, integration):
+        self.portal = integration["portal"]
 
     def test_vocabulary_registered(self):
         """Test vocabulary factory is registered."""

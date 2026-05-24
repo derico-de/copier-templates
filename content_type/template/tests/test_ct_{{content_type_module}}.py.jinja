@@ -4,7 +4,7 @@ import pytest
 from plone import api
 from plone.app.testing import setRoles
 from plone.app.testing import TEST_USER_ID
-from plone.dexterity.fti import DexterityFTI
+from plone.dexterity.interfaces import IDexterityFTI
 from zope.component import queryUtility
 
 from {{ package_name }}.testing import INTEGRATION_TESTING
@@ -16,29 +16,29 @@ class TestContentType{{ content_type_class }}:
     layer = INTEGRATION_TESTING
 
     @pytest.fixture(autouse=True)
-    def _setup(self, integration_testing):
-        self.portal = integration_testing["portal"]
+    def _setup(self, integration):
+        self.portal = integration["portal"]
         setRoles(self.portal, TEST_USER_ID, ["Manager"])
 
     def test_fti(self):
         """Test FTI is installed."""
-        fti = queryUtility(DexterityFTI, name="{{ content_type_portal_type }}")
+        fti = queryUtility(IDexterityFTI, name="{{ content_type_portal_type }}")
         assert fti is not None
 
     def test_fti_title(self):
         """Test FTI title."""
-        fti = queryUtility(DexterityFTI, name="{{ content_type_portal_type }}")
+        fti = queryUtility(IDexterityFTI, name="{{ content_type_portal_type }}")
         assert fti.title == "{{ content_type_name }}"
 
     def test_schema(self):
         """Test schema interface."""
-        fti = queryUtility(DexterityFTI, name="{{ content_type_portal_type }}")
+        fti = queryUtility(IDexterityFTI, name="{{ content_type_portal_type }}")
         schema = fti.lookupSchema()
         assert schema.getName() == "{{ content_type_interface }}"
 
     def test_factory(self):
         """Test content factory."""
-        fti = queryUtility(DexterityFTI, name="{{ content_type_portal_type }}")
+        fti = queryUtility(IDexterityFTI, name="{{ content_type_portal_type }}")
         factory = fti.factory
         obj = api.content.create(
             container=self.portal,
@@ -72,5 +72,5 @@ class TestContentType{{ content_type_class }}:
 
     def test_global_allow(self):
         """Test content type global_allow setting."""
-        fti = queryUtility(DexterityFTI, name="{{ content_type_portal_type }}")
+        fti = queryUtility(IDexterityFTI, name="{{ content_type_portal_type }}")
         assert fti.global_allow is {{ global_allow | string | title }}
