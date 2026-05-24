@@ -42,9 +42,11 @@ def update_pyproject(dest_path, plone_version, distribution, db_storage, base_pa
     for dep in runtime_deps:
         updater.add_to_list("project", "dependencies", value=dep)
 
-    # 2. Add dev dependencies
+    # 2. Add dev tooling to a PEP 735 dependency group. uv installs the
+    #    default ``dev`` group automatically on ``uv run``, so the invoke
+    #    task runner is available without passing ``--extra``/``--group``.
     for dep in ["invoke", "watchdog"]:
-        updater.add_to_list("project", "optional-dependencies", "dev", value=dep)
+        updater.add_to_list("dependency-groups", "dev", value=dep)
 
     # 3. Ensure [tool.uv] and add constraint-dependencies / override-dependencies
     updater.ensure_section("tool", "uv")

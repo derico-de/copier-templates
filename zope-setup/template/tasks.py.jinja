@@ -29,7 +29,7 @@ def shell(c, instance="instance"):
 @task
 def test(c, verbose=False):
     """Run tests."""
-    cmd = "uv run pytest"
+    cmd = "uv run --extra test pytest"
     if verbose:
         cmd += " -v"
     c.run(cmd)
