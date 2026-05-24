@@ -94,7 +94,7 @@ class TestZopeSetupIsolated:
 
         tasks = temp_dir / "my-project/tasks.py"
         assert_file_exists(tasks, content_contains="uv run runwsgi")
-        assert_file_exists(tasks, content_contains="uv run pytest")
+        assert_file_exists(tasks, content_contains="uv run --extra test pytest")
         assert_file_exists(tasks, content_contains="uv run ruff")
 
     def test_distribution_options(self, temp_dir, zope_setup_template):

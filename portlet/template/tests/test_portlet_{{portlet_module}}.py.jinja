@@ -13,8 +13,8 @@ class TestPortlet{{ portlet_name }}:
     layer = INTEGRATION_TESTING
 
     @pytest.fixture(autouse=True)
-    def _setup(self, integration_testing):
-        self.portal = integration_testing["portal"]
+    def _setup(self, integration):
+        self.portal = integration["portal"]
 
     def test_portlet_type_registered(self):
         """Test portlet type is registered."""

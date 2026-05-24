@@ -13,8 +13,8 @@ class TestUpgrade{{ destination_version }}:
     layer = INTEGRATION_TESTING
 
     @pytest.fixture(autouse=True)
-    def _setup(self, integration_testing):
-        self.portal = integration_testing["portal"]
+    def _setup(self, integration):
+        self.portal = integration["portal"]
         setRoles(self.portal, TEST_USER_ID, ["Manager"])
 
     def test_upgrade_handler_importable(self):

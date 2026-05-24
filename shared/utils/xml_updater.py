@@ -176,16 +176,40 @@ class ZCMLConfigureExtender:
             self._content = content.replace(opening, new_opening, 1)
             self._modified = True
 
-    def has_element(self, tag: str, attr: str, value: str) -> bool:
-        """Return True if a ``<tag>`` with ``attr="value"`` already exists."""
+    def has_element(
+        self,
+        tag: str,
+        attr: str,
+        value: str,
+        extra_attrs: dict[str, str] | None = None,
+    ) -> bool:
+        """Return True if a matching ``<tag>`` element already exists.
+
+        A match requires ``attr="value"`` and, when ``extra_attrs`` is given,
+        every additional ``attr="value"`` pair to be present on the *same*
+        element. This lets callers identify an element by a composite key
+        (e.g. a ``browser:page`` by both ``name`` and ``for``), so two views
+        sharing a ``name`` but registered ``for`` different interfaces are not
+        treated as duplicates.
+        """
         content = self.load()
         if not content:
             return False
-        pattern = (
-            rf'<{re.escape(tag)}\b[^>]*\b{re.escape(attr)}\s*=\s*'
-            rf'["\']{re.escape(value)}["\']'
-        )
-        return bool(re.search(pattern, content, re.DOTALL))
+        required = {attr: value}
+        if extra_attrs:
+            required.update(extra_attrs)
+        # Iterate each element's opening tag (attribute values hold no '>').
+        element_pattern = rf"<{re.escape(tag)}\b[^>]*?/?>"
+        for match in re.finditer(element_pattern, content, re.DOTALL):
+            block = match.group(0)
+            if all(
+                re.search(
+                    rf'\b{re.escape(a)}\s*=\s*["\']{re.escape(v)}["\']', block
+                )
+                for a, v in required.items()
+            ):
+                return True
+        return False
 
     def append_element(self, snippet: str) -> None:
         """Append a raw ZCML element snippet before ``</configure>``."""
@@ -212,8 +236,14 @@ def extend_configure_zcml(
     identifying_attr: str,
     identifying_value: str,
     snippet: str,
+    extra_identifying_attrs: dict[str, str] | None = None,
 ) -> tuple[bool, str]:
     """Create-if-missing and idempotently append a ZCML element.
+
+    ``extra_identifying_attrs`` lets callers identify an element by a composite
+    key (e.g. a ``browser:page`` by both ``name`` and ``for``), so distinct
+    registrations that happen to share the primary attribute are not treated
+    as duplicates.
 
     Returns ``(changed, message)`` — ``changed`` is True if anything
     was written; ``message`` is a human-readable status string.
@@ -221,10 +251,16 @@ def extend_configure_zcml(
     ext = ZCMLConfigureExtender(zcml_path)
     ext.create_if_missing(package_name, namespaces=namespaces)
     ext.ensure_namespaces(namespaces)
-    if ext.has_element(element_tag, identifying_attr, identifying_value):
+    if ext.has_element(
+        element_tag, identifying_attr, identifying_value, extra_identifying_attrs
+    ):
+        key = f"{identifying_attr}='{identifying_value}'"
+        if extra_identifying_attrs:
+            key += "".join(
+                f", {a}='{v}'" for a, v in extra_identifying_attrs.items()
+            )
         return False, (
-            f"{element_tag} with {identifying_attr}='{identifying_value}' "
-            f"already exists in {zcml_path}."
+            f"{element_tag} with {key} already exists in {zcml_path}."
         )
     ext.append_element(snippet)
     ext.save()
