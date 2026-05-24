@@ -77,6 +77,9 @@ def post_copy(
         identifying_attr="name",
         identifying_value=view_name,
         snippet=snippet,
+        # A view is identified by name + the interface it is registered for,
+        # so the same @@name may exist for different content types.
+        extra_identifying_attrs={"for": view_for_interface},
     )
     print(msg)
 

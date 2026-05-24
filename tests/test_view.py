@@ -115,6 +115,52 @@ class TestViewIntegration:
         content = parent_zcml.read_text()
         assert content.count('<include package=".views" />') == 1
 
+    def test_same_name_different_for_both_registered(
+        self, fresh_addon, view_template
+    ):
+        """Two @@view registrations for different interfaces must coexist."""
+        for class_name, view_for in (
+            ("DocView", "plone.app.contenttypes.interfaces.IDocument"),
+            ("NewsView", "plone.app.contenttypes.interfaces.INewsItem"),
+        ):
+            result = apply_subtemplate(
+                view_template,
+                fresh_addon,
+                data={
+                    "view_name": "view",
+                    "view_class_name": class_name,
+                    "view_for": view_for,
+                    "package_name": "collective.mypackage",
+                },
+            )
+            assert result.returncode == 0, f"copier failed: {result.stderr}"
+        zcml = fresh_addon / "src/collective/mypackage/views/configure.zcml"
+        content = zcml.read_text()
+        assert content.count('name="view"') == 2
+        assert 'for="plone.app.contenttypes.interfaces.IDocument"' in content
+        assert 'for="plone.app.contenttypes.interfaces.INewsItem"' in content
+        assert ".doc_view.DocView" in content
+        assert ".news_view.NewsView" in content
+
+    def test_same_name_same_for_not_duplicated(
+        self, fresh_addon, view_template
+    ):
+        """Re-applying the identical view (name + for) stays idempotent."""
+        for _ in range(2):
+            result = apply_subtemplate(
+                view_template,
+                fresh_addon,
+                data={
+                    "view_name": "view",
+                    "view_class_name": "DocView",
+                    "view_for": "plone.app.contenttypes.interfaces.IDocument",
+                    "package_name": "collective.mypackage",
+                },
+            )
+            assert result.returncode == 0, f"copier failed: {result.stderr}"
+        zcml = fresh_addon / "src/collective/mypackage/views/configure.zcml"
+        assert zcml.read_text().count('name="view"') == 1
+
 
 class TestViewEdgeCases:
     def test_without_template(self, fresh_addon, view_template):
