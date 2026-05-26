@@ -4,6 +4,7 @@ Usage:
     python update.py
 """
 
+import glob
 import os
 import subprocess
 from importlib.resources import files
@@ -17,7 +18,7 @@ locale_path = target_path + "locales/"
 i18ndude = "i18ndude"
 
 # ignore node_modules files resulting in errors
-excludes = '"*.html *json-schema*.xml"'
+excludes = "*.html *json-schema*.xml"
 
 
 def locale_folder_setup():
@@ -29,25 +30,38 @@ def locale_folder_setup():
             continue
         lc_messages_path = lang + "/LC_MESSAGES/"
         os.mkdir(lc_messages_path)
-        cmd = f"msginit --locale={lang} --input={domain}.pot --output={lang}/LC_MESSAGES/{domain}.po"
-        subprocess.call(cmd, shell=True)
+        subprocess.call(
+            [
+                "msginit",
+                f"--locale={lang}",
+                f"--input={domain}.pot",
+                f"--output={lang}/LC_MESSAGES/{domain}.po",
+            ]
+        )
     os.chdir("../../../../")
 
 
 def _rebuild():
-    cmd = (
-        f"{i18ndude} rebuild-pot --pot {locale_path}/{domain}.pot "
-        f"--exclude {excludes} --create {domain} {target_path}"
+    subprocess.call(
+        [
+            i18ndude,
+            "rebuild-pot",
+            "--pot",
+            f"{locale_path}/{domain}.pot",
+            "--exclude",
+            excludes,
+            "--create",
+            domain,
+            target_path,
+        ]
     )
-    subprocess.call(cmd, shell=True)
 
 
 def _sync():
-    cmd = (
-        f"{i18ndude} sync --pot {locale_path}/{domain}.pot "
-        f"{locale_path}*/LC_MESSAGES/{domain}.po"
+    po_files = glob.glob(f"{locale_path}*/LC_MESSAGES/{domain}.po")
+    subprocess.call(
+        [i18ndude, "sync", "--pot", f"{locale_path}/{domain}.pot", *po_files]
     )
-    subprocess.call(cmd, shell=True)
 
 
 def update_locale():

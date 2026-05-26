@@ -33,6 +33,23 @@ class AddonContextHook(ContextHook):
         dst_path = Path(context.get("_copier_conf", {}).get("dst_path", ""))
         addon_context = self._read_context(dst_path)
         context["addon_context"] = addon_context
+        context["plone_version_full_default"] = self._derive_full_version(
+            addon_context, context.get("plone_versions_full") or []
+        )
+
+    @staticmethod
+    def _derive_full_version(addon_context, all_versions):
+        """Pick a full version matching the addon's minor series, else latest."""
+        default_full = all_versions[0] if all_versions else ""
+        minor = (addon_context or {}).get("plone_version")
+        if minor:
+            match = next(
+                (v for v in all_versions if v == minor or v.startswith(minor + ".")),
+                None,
+            )
+            if match:
+                default_full = match
+        return default_full
 
     @staticmethod
     def _read_context(dst_path):

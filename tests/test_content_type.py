@@ -288,6 +288,39 @@ class TestContentTypeEdgeCases:
         assert 'purge="False"' in content
         assert '<element value="Widget"/>' in content
 
+    def test_not_global_allow_test_uses_parent_container(
+        self, addon_dir, content_type_template
+    ):
+        """Generated test creates a parent and asserts addability when not global."""
+        run_copier(
+            content_type_template,
+            addon_dir,
+            data={
+                "content_type_name": "Book",
+                "global_allow": False,
+                "parent_content_type": "Folder",
+            },
+        )
+        content = (addon_dir / "tests/test_ct_book.py").read_text()
+        assert 'type="Folder"' in content
+        assert "self.container = api.content.create(" in content
+        assert "container=self.container," in content
+        assert "def test_addable_in_parent" in content
+        assert "allowedContentTypes()" in content
+
+    def test_global_allow_test_uses_portal(
+        self, addon_dir, content_type_template
+    ):
+        """Generated test creates directly in the portal when globally addable."""
+        run_copier(
+            content_type_template,
+            addon_dir,
+            data={"content_type_name": "Article", "global_allow": True},
+        )
+        content = (addon_dir / "tests/test_ct_article.py").read_text()
+        assert "self.container = self.portal" in content
+        assert "def test_addable_in_parent" not in content
+
     def test_disable_navigation(self, addon_dir, content_type_template):
         """Content type without navigation behavior."""
         run_copier(
