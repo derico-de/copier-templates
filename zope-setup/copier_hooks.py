@@ -87,7 +87,7 @@ def create_initial_instance(dest_path, db_storage, base_path="var",
     template_path = Path(__file__).resolve().parent.parent / "zope_instance"
 
     cmd = [
-        "copier", "copy", "--trust", "--defaults", "--overwrite",
+        sys.executable, "-m", "copier", "copy", "--trust", "--defaults", "--overwrite",
         "--data", f"db_storage={db_storage}",
         "--data", f"base_path={base_path}",
         "--data", f"initial_zope_username={initial_zope_username}",

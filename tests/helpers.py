@@ -1,6 +1,7 @@
 """Test helper utilities for copier-templates tests."""
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -27,7 +28,15 @@ def run_copier(
     Returns:
         CompletedProcess with stdout, stderr, and returncode
     """
-    cmd = ["copier", "copy", "--trust", str(template_path), str(dest_path)]
+    cmd = [
+        sys.executable,
+        "-m",
+        "copier",
+        "copy",
+        "--trust",
+        str(template_path),
+        str(dest_path),
+    ]
 
     if defaults:
         cmd.append("--defaults")
