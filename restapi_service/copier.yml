@@ -2,6 +2,10 @@ _min_copier_version: "9.0.0"
 _subdirectory: template
 _answers_file: .copier-answers.restapi-service.yml
 
+_jinja_extensions:
+  - copier_template_extensions.TemplateExtensionLoader
+  - extensions.py:ServiceForInterfacesHook
+
 _plonecli:
   type: sub
   parent: backend_addon
@@ -30,7 +34,7 @@ _tasks:
       - "post_copy"
       - "{{ _copier_conf.dst_path }}"
       - "{{ service_name }}"
-      - "{{ service_for }}"
+      - "{{ service_for_resolved }}"
       - "{{ service_module }}"
       - "{{ service_class }}"
       - "{{ service_endpoint }}"
@@ -88,16 +92,27 @@ http_delete:
   help: "Support DELETE requests?"
   default: false
 
-# Context
+# Context — the interface the service is registered for. Choices are the
+# default Plone interfaces plus any content type interfaces found in this
+# package, with "<enter manually>" to type a custom dotted name.
 service_for:
   type: str
-  help: "Context for the service"
+  help: "Context interface the service is registered for"
   default: "plone.dexterity.interfaces.IDexterityContainer"
-  choices:
-    - "plone.dexterity.interfaces.IDexterityContainer"
-    - "plone.dexterity.interfaces.IDexterityContent"
-    - "Products.CMFPlone.interfaces.IPloneSiteRoot"
-    - "zope.interface.Interface"
+  choices: "{{ service_for_choices }}"
+
+service_for_manual:
+  type: str
+  help: "Custom interface dotted name (e.g. 'my.package.interfaces.IFoo')"
+  default: ""
+  when: "{{ service_for == '<enter manually>' }}"
+  validator: "{% if not service_for_manual %}Custom interface is required{% endif %}"
+
+# Computed: resolve service_for to the final interface string
+service_for_resolved:
+  type: str
+  default: "{{ service_for_manual if service_for == '<enter manually>' else service_for }}"
+  when: false
 
 # Computed values
 service_module:

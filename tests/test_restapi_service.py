@@ -229,3 +229,46 @@ class TestRestapiServiceEdgeCases:
             zcml_file,
             content_contains="Products.CMFPlone.interfaces.IPloneSiteRoot",
         )
+
+    def test_service_for_own_content_type_interface(
+        self, addon_dir, content_type_template, restapi_service_template
+    ):
+        """service_for can target a content type interface from this package."""
+        run_copier(
+            content_type_template,
+            addon_dir,
+            data={
+                "content_type_name": "Article",
+                "package_name": "collective.mypackage",
+            },
+        )
+        own_iface = "collective.mypackage.content.article.IArticle"
+        run_copier(
+            restapi_service_template,
+            addon_dir,
+            data={
+                "service_name": "article-info",
+                "package_name": "collective.mypackage",
+                "service_for": own_iface,
+            },
+        )
+        zcml_file = addon_dir / "src/collective/mypackage/services/configure.zcml"
+        assert_file_exists(zcml_file, content_contains=f'for="{own_iface}"')
+
+    def test_service_for_manual_entry(
+        self, addon_dir, restapi_service_template
+    ):
+        """'<enter manually>' resolves to the custom interface dotted name."""
+        custom = "my.package.interfaces.ICustom"
+        run_copier(
+            restapi_service_template,
+            addon_dir,
+            data={
+                "service_name": "custom-svc",
+                "package_name": "collective.mypackage",
+                "service_for": "<enter manually>",
+                "service_for_manual": custom,
+            },
+        )
+        zcml_file = addon_dir / "src/collective/mypackage/services/configure.zcml"
+        assert_file_exists(zcml_file, content_contains=f'for="{custom}"')
