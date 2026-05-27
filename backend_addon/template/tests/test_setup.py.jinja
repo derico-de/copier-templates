@@ -1,6 +1,5 @@
 """Test {{ package_name }} installation."""
 import pytest
-
 from plone import api
 from plone.app.testing import setRoles
 from plone.app.testing import TEST_USER_ID
@@ -20,11 +19,11 @@ class TestSetup:
 
     def test_browserlayer(self):
         """Test browserlayer is registered."""
-        from plone.browserlayer import utils
-        # Add actual browserlayer check if you have one
+        # Add an actual browserlayer check if your addon registers one, e.g.:
+        # from plone.browserlayer import utils
         # from {{ package_name }}.interfaces import I{{ package_name.replace('.', ' ').title().replace(' ', '') }}Layer
         # assert I{{ package_name.replace('.', ' ').title().replace(' ', '') }}Layer in utils.registered_layers()
-        pass
+        assert True
 
 
 class TestUninstall:

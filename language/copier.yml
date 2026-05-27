@@ -1,0 +1,58 @@
+_min_copier_version: "9.0.0"
+_subdirectory: template
+_answers_file: ".copier-answers.language-{{ language_code }}.yml"
+
+_plonecli:
+  type: sub
+  parent: backend_addon
+  description: "Add a translation language (locale .po catalog) to the addon"
+
+_tasks:
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "validate"
+      - "{{ _copier_conf.dst_path }}"
+    when: "{{ _copier_conf.operation == 'copy' }}"
+  - command:
+      - "uv"
+      - "run"
+      - "--no-project"
+      - "--with"
+      - "tomlkit"
+      - "python3"
+      - "{{ _copier_conf.src_path }}/copier_hooks.py"
+      - "post_copy"
+      - "{{ _copier_conf.dst_path }}"
+      - "{{ language_code }}"
+
+# Language to add
+language_code:
+  type: str
+  help: "Language code (ISO 639-1, e.g. 'de', 'fr', 'es')"
+  validator: "{% if not language_code %}Language code is required{% endif %}"
+
+language_name:
+  type: str
+  help: "Human-readable language name (e.g. 'German')"
+  default: "{{ language_code }}"
+
+# Package info - read from parent addon
+package_name:
+  type: str
+  help: "Parent addon package name"
+
+package_folder:
+  type: str
+  help: "Parent addon package folder (e.g., collective/mypackage)"
+  default: "{{ package_name | replace('.', '/') }}"
+
+current_date:
+  type: str
+  default: "{{ '%Y-%m-%d' | strftime }}"
+  when: false

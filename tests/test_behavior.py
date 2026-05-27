@@ -97,7 +97,7 @@ class TestBehaviorCreation:
         )
 
         zcml_file = addon_dir / "src/collective/mypackage/behaviors/configure.zcml"
-        assert_file_exists(zcml_file)
+        assert_file_exists(zcml_file, content_contains='name="collective.mypackage.itaggable"')
 
     def test_behavior_has_interface(self, addon_dir, behavior_template):
         """Behavior file contains interface."""

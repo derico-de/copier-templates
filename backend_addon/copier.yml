@@ -68,6 +68,11 @@ author_email:
   help: "Author email"
   default: "dev@plone.org"
 
+github_organization:
+  type: str
+  help: "GitHub organization or user for project URLs"
+  default: "{{ package_name.split('.')[:-1] | join('.') or 'collective' }}"
+
 # Computed values - package folder structure
 package_folder:
   type: str

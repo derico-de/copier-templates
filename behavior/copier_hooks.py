@@ -59,10 +59,15 @@ def post_copy(
     package_name = ctx.package_name
     package_folder = ctx.package_folder
 
-    # Extend behaviors/configure.zcml with the <plone:behavior> entry
+    # Extend behaviors/configure.zcml with the <plone:behavior> entry.
+    # Pin an explicit short name so the behavior is addressable by a stable
+    # identifier instead of the full interface dotted path (which would change
+    # if the module/interface is ever moved or renamed).
     provides = f".{behavior_module}.{behavior_interface}"
+    behavior_lookup_name = f"{package_name}.{behavior_module}"
     lines = [
         "  <plone:behavior",
+        f'      name="{behavior_lookup_name}"',
         f'      title="{behavior_interface}"',
         f'      description="{behavior_description}"',
         f'      provides="{provides}"',

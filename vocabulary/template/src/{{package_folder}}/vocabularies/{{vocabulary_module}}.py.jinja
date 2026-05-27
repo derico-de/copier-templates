@@ -34,6 +34,8 @@ from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
 
+from {{ package_name }}.i18n import _
+
 
 class VocabItem:
     """Lightweight holder for a (token, value) pair."""
@@ -53,7 +55,7 @@ class {{ vocabulary_class }}:
 
     def __call__(self, context):
         items = [
-            VocabItem("example-token", "Example value"),
+            VocabItem("example-token", _("Example value")),
         ]
         terms = [
             SimpleTerm(value=item.token, token=item.token, title=item.value)

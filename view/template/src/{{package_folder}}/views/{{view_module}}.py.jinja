@@ -10,26 +10,23 @@ from plone.dexterity.browser.view import DefaultView
 from plone.app.contenttypes.browser.collection import CollectionView
 {%- endif %}
 {%- if view_marker %}
-from zope.interface import Interface
 from zope.interface import implementer
-{%- endif %}
-{%- if view_template %}
-# from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-{%- endif %}
-{%- if view_marker %}
+from zope.interface import Interface
 
 
 class I{{ view_class_name }}(Interface):
     """Marker interface for {{ view_class_name }}."""
-{%- endif %}
 
 
-{%- if view_marker %}
 @implementer(I{{ view_class_name }})
-{%- endif %}
 class {{ view_class_name }}({{ view_base_class }}):
     """{{ view_description }}"""
+{%- else %}
 
+
+class {{ view_class_name }}({{ view_base_class }}):
+    """{{ view_description }}"""
+{%- endif %}
 {%- if view_template %}
 
     # If you need to override the template registered in configure.zcml:

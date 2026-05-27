@@ -41,10 +41,10 @@ test = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/collective/{{ package_name }}"
-Documentation = "https://github.com/collective/{{ package_name }}"
-Repository = "https://github.com/collective/{{ package_name }}.git"
-Issues = "https://github.com/collective/{{ package_name }}/issues"
+Homepage = "https://github.com/{{ github_organization }}/{{ package_name }}"
+Documentation = "https://github.com/{{ github_organization }}/{{ package_name }}"
+Repository = "https://github.com/{{ github_organization }}/{{ package_name }}.git"
+Issues = "https://github.com/{{ github_organization }}/{{ package_name }}/issues"
 
 [project.entry-points."z3c.autoinclude.plugin"]
 target = "plone"
@@ -99,8 +99,14 @@ ignore = ["E731"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]
+# Locale update helper shells out to fixed translation tools (i18ndude/msginit).
+"src/**/locales/update.py" = ["S603", "S607"]
 
 [tool.ruff.lint.isort]
+# Match the single-import-per-line, alphabetical layout the templates emit.
+force-single-line = true
+order-by-type = false
+lines-after-imports = 2
 known-first-party = ["{{ package_name.split('.')[0] }}"]
 
 [tool.ruff.format]

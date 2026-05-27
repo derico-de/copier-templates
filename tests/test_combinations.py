@@ -114,6 +114,49 @@ class TestMultipleSubtemplates:
         assert "@analytics" in subtemplates["services"]
 
 
+class TestSubtemplateIdempotency:
+    """Re-running a subtemplate with the same answers must not duplicate wiring."""
+
+    def test_rerun_does_not_duplicate(
+        self,
+        temp_dir,
+        backend_addon_template,
+        content_type_template,
+        restapi_service_template,
+        behavior_template,
+    ):
+        pkg = temp_dir / "mypackage"
+        run_copier(backend_addon_template, pkg, data={"package_name": "collective.mypackage"})
+
+        def _add(template, **data):
+            data["package_name"] = "collective.mypackage"
+            run_copier(template, pkg, data=data)
+
+        for _ in range(2):
+            _add(content_type_template, content_type_name="Article")
+            _add(restapi_service_template, service_name="stats")
+            _add(behavior_template, behavior_name="IFeatured")
+
+        src = pkg / "src/collective/mypackage"
+        # No duplicate registrations in the parent configure.zcml.
+        parent = (src / "configure.zcml").read_text()
+        assert parent.count('package=".content"') == 1
+        assert parent.count('package=".services"') == 1
+        assert parent.count('package=".behaviors"') == 1
+        # No duplicate elements in the feature configure.zcml files.
+        assert (src / "services/configure.zcml").read_text().count('name="@stats"') == 1
+        assert (
+            (src / "behaviors/configure.zcml").read_text().count("<plone:behavior") == 1
+        )
+        # Settings register each subtemplate once.
+        settings = read_toml(pkg / "pyproject.toml")["tool"]["plone"][
+            "backend_addon"
+        ]["settings"]["subtemplates"]
+        assert settings["content_types"].count("Article") == 1
+        assert settings["services"].count("@stats") == 1
+        assert settings["behaviors"].count("IFeatured") == 1
+
+
 class TestFullStackIntegration:
     """Test full workflow: zope-setup + addon + subtemplates."""
 

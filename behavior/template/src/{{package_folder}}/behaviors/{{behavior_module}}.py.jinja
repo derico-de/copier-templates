@@ -1,14 +1,17 @@
 """{{ behavior_name }} behavior."""
 from plone.autoform.interfaces import IFormFieldProvider
-from plone.supermodel import model
-from zope import schema
-from zope.interface import Interface
-from zope.interface import provider
 {%- if behavior_factory %}
-from zope.interface import implementer
 from plone.dexterity.interfaces import IDexterityContent
-from zope.component import adapter
 {%- endif %}
+from plone.supermodel import model
+{%- if behavior_factory %}
+from zope.component import adapter
+from zope.interface import implementer
+{%- endif %}
+{%- if behavior_marker %}
+from zope.interface import Interface
+{%- endif %}
+from zope.interface import provider
 
 
 {%- if behavior_marker %}
