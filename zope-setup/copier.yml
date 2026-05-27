@@ -76,7 +76,7 @@ project_description:
 plone_version:
   type: str
   help: "Plone version to use"
-  default: "{{ plone_versions_full[0] }}"
+  default: "{{ plone_version_full_default | default(plone_versions_full[0]) }}"
   choices: "{{ plone_versions_full }}"
 
 distribution:
