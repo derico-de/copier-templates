@@ -217,6 +217,10 @@ To update an existing project with template changes:
 copier update --trust
 ```
 
+## Changelog
+
+See [CHANGES.md](CHANGES.md) for the release history.
+
 ## License
 
 MIT
