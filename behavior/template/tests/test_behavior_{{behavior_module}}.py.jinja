@@ -19,7 +19,7 @@ class TestBehavior{{ behavior_class }}:
         """Test behavior is registered."""
         behavior = getUtility(
             IBehavior,
-            name="{{ package_name }}.behaviors.{{ behavior_module }}.{{ behavior_interface }}",
+            name="{{ package_name }}.{{ behavior_module }}",
         )
         assert behavior is not None
         assert behavior.title
@@ -29,7 +29,7 @@ class TestBehavior{{ behavior_class }}:
         """Test behavior marker interface."""
         behavior = getUtility(
             IBehavior,
-            name="{{ package_name }}.behaviors.{{ behavior_module }}.{{ behavior_interface }}",
+            name="{{ package_name }}.{{ behavior_module }}",
         )
         from {{ package_name }}.behaviors.{{ behavior_module }} import {{ behavior_interface }}Marker
         assert behavior.marker == {{ behavior_interface }}Marker
