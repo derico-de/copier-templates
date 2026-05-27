@@ -174,6 +174,12 @@ def svelte_app_template(templates_dir):
     return templates_dir / "svelte_app"
 
 
+@pytest.fixture
+def language_template(templates_dir):
+    """Return path to language template."""
+    return templates_dir / "language"
+
+
 @pytest.fixture(scope="session")
 def prebuilt_addon_source(tmp_path_factory, backend_addon_session_template):
     """

@@ -1,6 +1,5 @@
 """Tests for {{ content_type_name }} content type."""
 import pytest
-
 from plone import api
 from plone.app.testing import setRoles
 from plone.app.testing import TEST_USER_ID
@@ -19,6 +18,19 @@ class TestContentType{{ content_type_class }}:
     def _setup(self, integration):
         self.portal = integration["portal"]
         setRoles(self.portal, TEST_USER_ID, ["Manager"])
+{%- if global_allow %}
+        # Globally addable: create directly in the portal root.
+        self.container = self.portal
+{%- else %}
+        # Not globally addable: create a {{ parent_content_type_resolved }}
+        # parent that allows this type, and add inside it.
+        self.container = api.content.create(
+            container=self.portal,
+            type="{{ parent_content_type_resolved }}",
+            id="parent-container",
+            title="Parent Container",
+        )
+{%- endif %}
 
     def test_fti(self):
         """Test FTI is installed."""
@@ -38,10 +50,8 @@ class TestContentType{{ content_type_class }}:
 
     def test_factory(self):
         """Test content factory."""
-        fti = queryUtility(IDexterityFTI, name="{{ content_type_portal_type }}")
-        factory = fti.factory
         obj = api.content.create(
-            container=self.portal,
+            container=self.container,
             type="{{ content_type_portal_type }}",
             id="test-{{ content_type_module }}",
             title="Test {{ content_type_name }}",
@@ -52,7 +62,7 @@ class TestContentType{{ content_type_class }}:
     def test_adding(self):
         """Test content can be added."""
         obj = api.content.create(
-            container=self.portal,
+            container=self.container,
             type="{{ content_type_portal_type }}",
             id="test-{{ content_type_module }}",
             title="Test {{ content_type_name }}",
@@ -62,15 +72,24 @@ class TestContentType{{ content_type_class }}:
     def test_deleting(self):
         """Test content can be deleted."""
         obj = api.content.create(
-            container=self.portal,
+            container=self.container,
             type="{{ content_type_portal_type }}",
             id="test-{{ content_type_module }}",
             title="Test {{ content_type_name }}",
         )
         api.content.delete(obj=obj)
-        assert "test-{{ content_type_module }}" not in self.portal.objectIds()
+        assert "test-{{ content_type_module }}" not in self.container.objectIds()
 
     def test_global_allow(self):
         """Test content type global_allow setting."""
         fti = queryUtility(IDexterityFTI, name="{{ content_type_portal_type }}")
         assert fti.global_allow is {{ global_allow | string | title }}
+{%- if not global_allow %}
+
+    def test_addable_in_parent(self):
+        """Test the type is addable inside its {{ parent_content_type_resolved }} parent."""
+        addable = [
+            fti.getId() for fti in self.container.allowedContentTypes()
+        ]
+        assert "{{ content_type_portal_type }}" in addable
+{%- endif %}

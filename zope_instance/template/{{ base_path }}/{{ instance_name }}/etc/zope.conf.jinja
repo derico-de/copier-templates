@@ -10,6 +10,11 @@ verbose-security off
 
 default-zpublisher-encoding utf-8
 
+# Compile .po -> .mo on startup so add-on translations load without a build step.
+<environment>
+    zope_i18n_compile_mo_files true
+</environment>
+
 {%- if db_storage == "instance" %}
 <zodb_db main>
     <filestorage>
