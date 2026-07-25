@@ -81,7 +81,7 @@ class TestGeneratedAddonInPloneSite:
         )
 
         run = subprocess.run(
-            ["uv", "run", "pytest", "tests/", "-v", "--tb=short"],
+            ["uv", "run", "pytest", "-v", "--tb=short"],
             cwd=addon_dir,
             env=plone_subprocess_env(),
             capture_output=True,

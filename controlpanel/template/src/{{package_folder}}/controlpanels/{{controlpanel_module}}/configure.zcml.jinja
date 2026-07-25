@@ -1,0 +1,24 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:plone="http://namespaces.plone.org/plone"
+    i18n_domain="{{ package_name }}">
+
+  <browser:page
+      name="{{ controlpanel_url_id }}"
+      for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+      class=".controlpanel.{{ controlpanel_name }}ControlPanelView"
+      layer="{{ package_name }}.interfaces.{{ browser_layer_name }}"
+      permission="cmf.ManagePortal"
+      />
+
+  <include package="plone.restapi" />
+  <adapter
+      factory=".controlpanel.{{ controlpanel_name }}ControlPanelAdapter"
+      provides="plone.restapi.controlpanels.interfaces.IControlpanel"
+      for="Products.CMFPlone.interfaces.IPloneSiteRoot
+           zope.interface.Interface"
+      name="{{ controlpanel_url_id }}"
+      />
+
+</configure>

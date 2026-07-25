@@ -166,7 +166,7 @@ class TestFormPermissionAndLayer:
         self, fresh_addon, form_template
     ):
         self._apply(fresh_addon, form_template)
-        test_file = fresh_addon / "tests/test_form_my_form.py"
+        test_file = fresh_addon / "src/collective/mypackage/tests/test_form_my_form.py"
         assert_file_exists(
             test_file,
             content_contains=[

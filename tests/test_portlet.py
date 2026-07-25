@@ -55,6 +55,15 @@ class TestPortletCreation:
         pt = fresh_addon / "src/collective/mypackage/portlets/weather.pt"
         assert_file_exists(pt)
 
+    def test_camelcase_name_lower_concat_module(
+        self, fresh_addon, portlet_template
+    ):
+        """bobtemplates parity: 'MyPortlet' -> portlets/myportlet.py."""
+        self._apply(fresh_addon, portlet_template, portlet_name="MyPortlet")
+        base = fresh_addon / "src/collective/mypackage/portlets"
+        assert_file_exists(base / "myportlet.py")
+        assert_file_exists(base / "myportlet.pt")
+
     def test_creates_portlet_configure_zcml(self, fresh_addon, portlet_template):
         self._apply(fresh_addon, portlet_template)
         zcml = fresh_addon / "src/collective/mypackage/portlets/configure.zcml"

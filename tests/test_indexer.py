@@ -52,16 +52,26 @@ class TestIndexerCreation:
             ],
         )
 
-    def test_creates_indexer_configure_zcml(self, fresh_addon, indexer_template):
+    def test_creates_per_indexer_zcml(self, fresh_addon, indexer_template):
+        """bobtemplates parity: adapters live in a per-indexer <name>.zcml."""
         self._apply(fresh_addon, indexer_template)
-        zcml = fresh_addon / "src/collective/mypackage/indexers/configure.zcml"
+        zcml = fresh_addon / "src/collective/mypackage/indexers/my_custom_index.zcml"
         assert_file_exists(
             zcml,
             content_contains=[
                 "<adapter",
                 'name="my_custom_index"',
-                ".my_custom_index",
+                ".my_custom_index.dummy",
+                ".my_custom_index.my_custom_index",
             ],
+        )
+
+    def test_creates_indexer_configure_zcml(self, fresh_addon, indexer_template):
+        self._apply(fresh_addon, indexer_template)
+        zcml = fresh_addon / "src/collective/mypackage/indexers/configure.zcml"
+        assert_file_exists(
+            zcml,
+            content_contains='<include file="my_custom_index.zcml" />',
         )
 
 

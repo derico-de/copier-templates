@@ -13,7 +13,7 @@ class {{ viewlet_class_name }}(ViewletBase):
 
 {%- if viewlet_template %}
 
-    index = ViewPageTemplateFile("{{ viewlet_module }}.pt")
+    index = ViewPageTemplateFile("{{ viewlet_template_name }}.pt")
 {%- else %}
 
     def render(self):

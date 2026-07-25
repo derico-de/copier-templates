@@ -116,6 +116,10 @@ class TestUpgradeStepCreation:
             / "src/collective/mypackage/upgrades/1001/metadata.txt"
         )
         assert metadata.exists()
+        # bobtemplates parity: the version dir also ships a .gitkeep
+        assert (
+            addon_dir / "src/collective/mypackage/upgrades/1001/.gitkeep"
+        ).exists()
 
     def test_creates_upgrades_init(self, addon_dir, upgrade_step_template):
         """Upgrade step creates upgrades __init__.py."""
@@ -409,7 +413,10 @@ class TestUpgradeStepInPloneSite:
         assert result.returncode == 0, f"upgrade_step failed: {result.stderr}"
 
         # 3. Drop a Plone integration test alongside the generated tests.
-        plone_test = addon_dir / "tests" / "test_upgrade_integration.py"
+        plone_test = (
+            addon_dir
+            / "src/collective/upgradetest/tests/test_upgrade_integration.py"
+        )
         plone_test.write_text(textwrap.dedent(f'''\
             """Plone integration test for upgrade step 1000 -> 1001."""
             from plone.app.testing import setRoles, TEST_USER_ID
@@ -465,7 +472,7 @@ class TestUpgradeStepInPloneSite:
         run = subprocess.run(
             [
                 "uv", "run", "pytest",
-                "tests/test_upgrade_integration.py",
+                "src/collective/upgradetest/tests/test_upgrade_integration.py",
                 "-v", "--tb=short",
             ],
             cwd=addon_dir,

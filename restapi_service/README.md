@@ -4,9 +4,12 @@ Adds a plone.restapi service endpoint to an existing `backend_addon` package. Mu
 
 ## What it generates
 
-- `src/<package_folder>/services/<module>.py` -- Service class with configurable HTTP methods
-- `src/<package_folder>/services/configure.zcml` -- ZCML registration with permissions
-- Registers the service in the parent addon's `configure.zcml`
+- `src/<package_folder>/api/services/<module>/` -- service subpackage with one
+  module per HTTP verb (`get.py`, `post.py`, ...) and a self-contained
+  `configure.zcml` (bobtemplates layout)
+- `src/<package_folder>/api/configure.zcml` and
+  `src/<package_folder>/api/services/configure.zcml` -- include chain
+- Adds `<include package=".api" />` to the parent addon's `configure.zcml`
 - Records the service in `[tool.plone.backend_addon.settings.subtemplates]`
 
 ## Options

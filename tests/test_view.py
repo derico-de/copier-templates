@@ -166,7 +166,7 @@ class TestViewGeneratedTestAdaptsRegisteredType:
     """The generated test must create the type the view is registered for."""
 
     def _generated_test(self, addon, module="my_view"):
-        return addon / f"tests/test_view_{module}.py"
+        return addon / f"src/collective/mypackage/tests/test_view_{module}.py"
 
     def test_default_for_any_uses_document(self, fresh_addon, view_template):
         result = apply_subtemplate(
@@ -331,7 +331,7 @@ class TestViewLayerBinding:
         self, fresh_addon, view_template
     ):
         self._apply(fresh_addon, view_template)
-        test_file = fresh_addon / "tests/test_view_my_view.py"
+        test_file = fresh_addon / "src/collective/mypackage/tests/test_view_my_view.py"
         assert_file_exists(
             test_file,
             content_contains=[

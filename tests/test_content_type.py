@@ -113,6 +113,42 @@ class TestContentTypeCreation:
         ct_file = addon_dir / "src/collective/mypackage/content/news_item.py"
         assert_file_exists(ct_file, content_contains="INewsItem")
 
+    def test_camelcase_name_snake_case_module(self, addon_dir, content_type_template):
+        """CamelCase names produce a snake_case module (bobtemplates parity)."""
+        run_copier(
+            content_type_template,
+            addon_dir,
+            data={"content_type_name": "MyContentType"},
+        )
+
+        ct_file = addon_dir / "src/collective/mypackage/content/my_content_type.py"
+        assert_file_exists(ct_file, content_contains="IMyContentType")
+
+    def test_multiword_name_snake_case_module(self, addon_dir, content_type_template):
+        """Multi-word names keep their word boundaries ('Todo task' -> todo_task)."""
+        run_copier(
+            content_type_template,
+            addon_dir,
+            data={"content_type_name": "Todo task"},
+        )
+
+        ct_file = addon_dir / "src/collective/mypackage/content/todo_task.py"
+        assert_file_exists(ct_file)
+
+    def test_creates_supermodel_xml_stub(self, addon_dir, content_type_template):
+        """Content type ships a content-local supermodel XML stub (bobtemplates parity)."""
+        run_copier(
+            content_type_template,
+            addon_dir,
+            data={"content_type_name": "News Item"},
+        )
+
+        xml_file = addon_dir / "src/collective/mypackage/content/news_item.xml"
+        assert_file_exists(
+            xml_file,
+            content_contains="http://namespaces.plone.org/supermodel/schema",
+        )
+
 
 class TestContentTypeIntegration:
     """Test content type registers in parent addon."""
@@ -301,7 +337,7 @@ class TestContentTypeEdgeCases:
                 "parent_content_type": "Folder",
             },
         )
-        content = (addon_dir / "tests/test_ct_book.py").read_text()
+        content = (addon_dir / "src/collective/mypackage/tests/test_ct_book.py").read_text()
         assert 'type="Folder"' in content
         assert "self.container = api.content.create(" in content
         assert "container=self.container," in content
@@ -317,7 +353,7 @@ class TestContentTypeEdgeCases:
             addon_dir,
             data={"content_type_name": "Article", "global_allow": True},
         )
-        content = (addon_dir / "tests/test_ct_article.py").read_text()
+        content = (addon_dir / "src/collective/mypackage/tests/test_ct_article.py").read_text()
         assert "self.container = self.portal" in content
         assert "def test_addable_in_parent" not in content
 

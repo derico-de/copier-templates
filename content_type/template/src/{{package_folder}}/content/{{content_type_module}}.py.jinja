@@ -10,6 +10,11 @@ class {{ content_type_interface }}(model.Schema):
     {{ content_type_description }}
     """
 
+    # If you want, you can load an XML model created TTW here and
+    # customize it in Python (the stub ships next to this module):
+    #
+    # model.load("{{ content_type_module }}.xml")
+
     # Add your fields here. Examples:
     #
     # from plone.app.textfield import RichText

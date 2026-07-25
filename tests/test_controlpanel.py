@@ -2,8 +2,10 @@
 
 Mirrors bobtemplates.plone controlpanel. Generates:
   src/<pkg>/controlpanels/__init__.py
-  src/<pkg>/controlpanels/<module>.py     (settings schema + form wrapper)
-  src/<pkg>/controlpanels/configure.zcml  (browser:page registration)
+  src/<pkg>/controlpanels/configure.zcml  (includes the subpackage)
+  src/<pkg>/controlpanels/<module>/__init__.py
+  src/<pkg>/controlpanels/<module>/configure.zcml  (browser:page registration)
+  src/<pkg>/controlpanels/<module>/controlpanel.py (settings schema + form wrapper)
   src/<pkg>/profiles/default/controlpanel.xml  (GS controlpanel entry)
   src/<pkg>/profiles/default/registry/<module>.xml  (registry records)
 """
@@ -40,16 +42,15 @@ class TestControlpanelCreation:
             fresh_addon / "src/collective/mypackage/controlpanels/__init__.py"
         )
 
-    def test_creates_controlpanel_module(
+    def test_creates_controlpanel_subpackage(
         self, fresh_addon, controlpanel_template
     ):
+        """bobtemplates parity: controlpanels/<module>/ is a subpackage."""
         self._apply(fresh_addon, controlpanel_template)
-        module = (
-            fresh_addon
-            / "src/collective/mypackage/controlpanels/my_featured.py"
-        )
+        subpkg = fresh_addon / "src/collective/mypackage/controlpanels/my_featured"
+        assert_file_exists(subpkg / "__init__.py")
         assert_file_exists(
-            module,
+            subpkg / "controlpanel.py",
             content_contains=[
                 "class IMyFeaturedSettings",
                 "class MyFeaturedControlPanelForm",
@@ -64,16 +65,26 @@ class TestControlpanelCreation:
         self._apply(fresh_addon, controlpanel_template)
         zcml = (
             fresh_addon
-            / "src/collective/mypackage/controlpanels/configure.zcml"
+            / "src/collective/mypackage/controlpanels/my_featured/configure.zcml"
         )
         assert_file_exists(
             zcml,
             content_contains=[
                 "<browser:page",
                 'name="my-featured-controlpanel"',
-                "MyFeaturedControlPanelView",
+                ".controlpanel.MyFeaturedControlPanelView",
             ],
         )
+
+    def test_controlpanels_zcml_includes_subpackage(
+        self, fresh_addon, controlpanel_template
+    ):
+        self._apply(fresh_addon, controlpanel_template)
+        zcml = (
+            fresh_addon
+            / "src/collective/mypackage/controlpanels/configure.zcml"
+        )
+        assert_file_exists(zcml, content_contains='package=".my_featured"')
 
     def test_creates_controlpanel_xml(self, fresh_addon, controlpanel_template):
         self._apply(fresh_addon, controlpanel_template)

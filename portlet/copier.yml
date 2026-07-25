@@ -54,17 +54,9 @@ package_folder:
   help: "Parent addon package folder (e.g., collective/mypackage)"
   default: "{{ package_name | replace('.', '/') }}"
 
-# Computed: PascalCase -> snake_case module
+# Computed: bobtemplates naming (snakecase of slugified name): 'MyPortlet' ->
+# myportlet, 'My Portlet' -> my_portlet, 'Weather' -> weather
 portlet_module:
   type: str
-  default: >-
-    {%- set ns = namespace(out='') -%}
-    {%- for ch in portlet_name -%}
-    {%- if ch.isupper() and ns.out -%}
-    {%- set ns.out = ns.out + '_' + ch|lower -%}
-    {%- else -%}
-    {%- set ns.out = ns.out + ch|lower -%}
-    {%- endif -%}
-    {%- endfor -%}
-    {{ ns.out }}
+  default: "{{ portlet_name | lower | replace('-', '_') | replace(' ', '_') }}"
   when: false

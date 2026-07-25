@@ -54,45 +54,17 @@ def post_copy(
 
     cp_zcml = dest / f"src/{package_folder}/controlpanels/configure.zcml"
 
-    # Extend controlpanels/configure.zcml with the <browser:page> entry
-    page_snippet = (
-        "  <browser:page\n"
-        f'      name="{controlpanel_url_id}"\n'
-        '      for="Products.CMFPlone.interfaces.IPloneSiteRoot"\n'
-        f'      class=".{controlpanel_module}.{controlpanel_name}ControlPanelView"\n'
-        '      permission="cmf.ManagePortal"\n'
-        "      />\n"
-    )
+    # The subpackage ships its own configure.zcml (bobtemplates parity);
+    # controlpanels/configure.zcml only includes it.
+    include_snippet = f'  <include package=".{controlpanel_module}" />\n'
     _, msg = extend_configure_zcml(
         cp_zcml,
         package_name or "package",
         namespaces={"browser": "http://namespaces.zope.org/browser"},
-        element_tag="browser:page",
-        identifying_attr="name",
-        identifying_value=controlpanel_url_id,
-        snippet=page_snippet,
-    )
-    print(msg)
-
-    # Extend controlpanels/configure.zcml with the <adapter> entry (plone.restapi)
-    adapter_factory = f".{controlpanel_module}.{controlpanel_name}ControlPanelAdapter"
-    adapter_snippet = (
-        "  <adapter\n"
-        f'      factory="{adapter_factory}"\n'
-        '      provides="plone.restapi.controlpanels.interfaces.IControlpanel"\n'
-        '      for="Products.CMFPlone.interfaces.IPloneSiteRoot\n'
-        '           zope.interface.Interface"\n'
-        f'      name="{controlpanel_url_id}"\n'
-        "      />\n"
-    )
-    _, msg = extend_configure_zcml(
-        cp_zcml,
-        package_name or "package",
-        namespaces={},
-        element_tag="adapter",
-        identifying_attr="factory",
-        identifying_value=adapter_factory,
-        snippet=adapter_snippet,
+        element_tag="include",
+        identifying_attr="package",
+        identifying_value=f".{controlpanel_module}",
+        snippet=include_snippet,
     )
     print(msg)
 
