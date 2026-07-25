@@ -10,7 +10,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "shared"))
 from exceptions import AddonContextError, CopierTemplateError
 from hooks.addon_context import find_addon_context, resolve_post_copy_context
 from hooks.git_check import warn_git_unclean
-from utils.xml_updater import ConfigureZCMLUpdater, ParentFTIUpdater, TypesXMLUpdater
+from utils.xml_updater import (
+    ConfigureZCMLUpdater,
+    DiffToolXMLUpdater,
+    ParentFTIUpdater,
+    RepositoryToolXMLUpdater,
+    TypesXMLUpdater,
+)
 
 
 def compute_content_type_values(content_type_name: str) -> dict:
@@ -106,8 +112,13 @@ def post_copy(
     1. Register content type in addon settings
     2. Update content/configure.zcml with behavior entry
     3. Update profiles/default/types.xml with FTI reference
-    4. If global_allow=false and parent_content_type is set, update the
+    4. Declare plone.app.dexterity profile dependency in metadata.xml
+    5. Register the type for versioning in repositorytool.xml
+    6. Register the type with the diff tool in diff_tool.xml
+    7. If global_allow=false and parent_content_type is set, update the
        parent FTI's allowed_content_types (when that FTI lives in this package).
+    8. Include the content subpackage in the parent configure.zcml
+    9. Register the Add permission in permissions.zcml and rolemap.xml
     """
     ctx = resolve_post_copy_context(dest_path)
     if ctx is None or not ctx.package_name:
@@ -160,7 +171,34 @@ def post_copy(
     else:
         print(f"FTI reference already exists in {types_path.relative_to(dest)}.")
 
-    # 4. If not globally addable, update parent FTI's allowed_content_types
+    profiles_dir = dest / f"src/{package_folder}/profiles/default"
+
+    # 4. Declare the Dexterity profile dependency in metadata.xml
+    ctx.add_profile_dependency("profile-plone.app.dexterity:default")
+
+    # 5. Register the type for versioning in repositorytool.xml
+    if RepositoryToolXMLUpdater(profiles_dir / "repositorytool.xml").add_type(
+        content_type_class
+    ):
+        print(
+            f"Registered '{content_type_class}' for versioning in "
+            "repositorytool.xml."
+        )
+    else:
+        print(f"'{content_type_class}' already in repositorytool.xml.")
+
+    # 6. Register the type with the diff tool in diff_tool.xml
+    if DiffToolXMLUpdater(profiles_dir / "diff_tool.xml").add_type(
+        content_type_class
+    ):
+        print(
+            f"Registered '{content_type_class}' with the diff tool in "
+            "diff_tool.xml."
+        )
+    else:
+        print(f"'{content_type_class}' already in diff_tool.xml.")
+
+    # 7. If not globally addable, update parent FTI's allowed_content_types
     if parent_content_type:
         types_dir = dest / f"src/{package_folder}/profiles/default/types"
         # Try package-local naming (no spaces) first, then GenericSetup
@@ -191,7 +229,7 @@ def post_copy(
                 f"to allow '{content_type_class}'."
             )
 
-    # 5. Add include for content subpackage in parent configure.zcml
+    # 8. Add include for content subpackage in parent configure.zcml
     parent_zcml = dest / f"src/{package_folder}/configure.zcml"
     if parent_zcml.exists():
         from utils.xml_updater import ParentZCMLUpdater
@@ -201,7 +239,7 @@ def post_copy(
             parent_updater.save()
             print("Added <include package=\".content\" /> to parent configure.zcml.")
 
-    # 6. Register the Add permission in permissions.zcml and rolemap.xml.
+    # 9. Register the Add permission in permissions.zcml and rolemap.xml.
     _register_add_permission(
         dest / f"src/{package_folder}/permissions.zcml",
         dest / f"src/{package_folder}/profiles/default/rolemap.xml",

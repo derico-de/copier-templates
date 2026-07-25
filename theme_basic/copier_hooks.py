@@ -39,6 +39,8 @@ def post_copy(dest_path: str, theme_name: str) -> None:
 
     _register_theme_static_resource(ctx, theme_name)
 
+    ctx.add_profile_dependency("profile-plone.app.theming:default")
+
 
 def _register_theme_static_resource(ctx: AddonContext, theme_name: str) -> None:
     if not ctx.package_folder:

@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "shared"))
 from exceptions import AddonContextError, CopierTemplateError
 from hooks.addon_context import find_addon_context, resolve_post_copy_context
 from hooks.git_check import warn_git_unclean
+from utils.xml_escape import escape_xml_attr
 from utils.xml_updater import ParentZCMLUpdater, extend_configure_zcml
 
 
@@ -69,7 +70,7 @@ def post_copy(
         "  <plone:behavior",
         f'      name="{behavior_lookup_name}"',
         f'      title="{behavior_interface}"',
-        f'      description="{behavior_description}"',
+        f'      description="{escape_xml_attr(behavior_description)}"',
         f'      provides="{provides}"',
     ]
     if behavior_marker.lower() == "true":

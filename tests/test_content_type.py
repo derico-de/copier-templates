@@ -336,3 +336,109 @@ class TestContentTypeEdgeCases:
         fti_file = addon_dir / "src/collective/mypackage/profiles/default/types/Hidden.xml"
         content = fti_file.read_text()
         assert "plone.excludefromnavigation" not in content
+
+
+class TestContentTypeProfileWiring:
+    """metadata.xml dependency, versioning and diff-tool wiring."""
+
+    @pytest.fixture
+    def addon_dir(self, temp_dir, backend_addon_template):
+        pkg_dir = temp_dir / "mypackage"
+        run_copier(
+            backend_addon_template,
+            pkg_dir,
+            data={"package_name": "collective.mypackage"},
+        )
+        return pkg_dir
+
+    def _apply(self, addon_dir, content_type_template, name="Task"):
+        result = run_copier(
+            content_type_template,
+            addon_dir,
+            data={
+                "content_type_name": name,
+                "package_name": "collective.mypackage",
+            },
+        )
+        assert result.returncode == 0, f"copier failed: {result.stderr}"
+
+    def _profile(self, addon_dir):
+        return addon_dir / "src/collective/mypackage/profiles/default"
+
+    def test_metadata_gains_dexterity_dependency(
+        self, addon_dir, content_type_template
+    ):
+        self._apply(addon_dir, content_type_template)
+        metadata = self._profile(addon_dir) / "metadata.xml"
+        assert_file_exists(
+            metadata,
+            content_contains=(
+                "<dependency>profile-plone.app.dexterity:default</dependency>"
+            ),
+        )
+
+    def test_metadata_dependency_added_exactly_once(
+        self, addon_dir, content_type_template
+    ):
+        self._apply(addon_dir, content_type_template, name="Task")
+        self._apply(addon_dir, content_type_template, name="Note")
+        content = (self._profile(addon_dir) / "metadata.xml").read_text()
+        assert content.count("profile-plone.app.dexterity:default") == 1
+
+    def test_repositorytool_registers_versioning_policies(
+        self, addon_dir, content_type_template
+    ):
+        self._apply(addon_dir, content_type_template)
+        repo = self._profile(addon_dir) / "repositorytool.xml"
+        assert_file_exists(
+            repo,
+            content_contains=[
+                '<type name="Task">',
+                '<policy name="at_edit_autoversion"/>',
+                '<policy name="version_on_revert"/>',
+            ],
+        )
+
+    def test_difftool_registers_compound_diff(
+        self, addon_dir, content_type_template
+    ):
+        self._apply(addon_dir, content_type_template)
+        diff = self._profile(addon_dir) / "diff_tool.xml"
+        assert_file_exists(
+            diff,
+            content_contains=[
+                '<type portal_type="Task">',
+                'difftype="Compound Diff for Dexterity types"',
+            ],
+        )
+
+    def test_second_type_added_to_existing_files(
+        self, addon_dir, content_type_template
+    ):
+        self._apply(addon_dir, content_type_template, name="Task")
+        self._apply(addon_dir, content_type_template, name="Note")
+        repo = (self._profile(addon_dir) / "repositorytool.xml").read_text()
+        diff = (self._profile(addon_dir) / "diff_tool.xml").read_text()
+        assert '<type name="Task">' in repo
+        assert '<type name="Note">' in repo
+        assert '<type portal_type="Task">' in diff
+        assert '<type portal_type="Note">' in diff
+
+    def test_rerun_adds_no_duplicates(self, addon_dir, content_type_template):
+        self._apply(addon_dir, content_type_template, name="Task")
+        self._apply(addon_dir, content_type_template, name="Task")
+        repo = (self._profile(addon_dir) / "repositorytool.xml").read_text()
+        diff = (self._profile(addon_dir) / "diff_tool.xml").read_text()
+        assert repo.count('<type name="Task">') == 1
+        assert diff.count('<type portal_type="Task">') == 1
+
+    def test_profile_xml_files_are_wellformed(
+        self, addon_dir, content_type_template
+    ):
+        import xml.etree.ElementTree as ET
+
+        self._apply(addon_dir, content_type_template, name="Task")
+        self._apply(addon_dir, content_type_template, name="Note")
+        profile = self._profile(addon_dir)
+        for name in ("metadata.xml", "repositorytool.xml", "diff_tool.xml"):
+            ET.parse(profile / name)

@@ -32,6 +32,7 @@ _tasks:
       - "{{ controlpanel_name }}"
       - "{{ controlpanel_url_id }}"
       - "{{ controlpanel_module }}"
+      - "{{ controlpanel_title }}"
 
 controlpanel_name:
   type: str

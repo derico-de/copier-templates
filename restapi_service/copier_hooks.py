@@ -140,6 +140,9 @@ def post_copy(
 
     ext.save()
 
+    # Declare the plone.restapi profile dependency in metadata.xml
+    ctx.add_profile_dependency("profile-plone.restapi:default")
+
     parent_zcml = dest / f"src/{package_folder}/configure.zcml"
     if parent_zcml.exists():
         zcml_updater = ParentZCMLUpdater(parent_zcml)

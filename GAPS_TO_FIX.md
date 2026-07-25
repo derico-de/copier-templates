@@ -18,16 +18,56 @@ content_type robot test, mockup_pattern demo page.
 
 ---
 
+## 0. Functional parity regressions — FIXED (2026-07)
+
+Found by comparing every copier post-copy hook against its bobtemplates.plone
+counterpart (spec: `plans/spec-bobtemplates-parity-regressions.md`). All fixed:
+
+- **Profile dependencies**: content_type now declares
+  `profile-plone.app.dexterity:default`, restapi_service
+  `profile-plone.restapi:default`, and all three theme templates
+  `profile-plone.app.theming:default` in `metadata.xml` (idempotent shared
+  `MetadataXMLUpdater.add_dependency`).
+- **Content type versioning/diff**: content_type registers the type in
+  `repositorytool.xml` (`at_edit_autoversion`, `version_on_revert`) and
+  `diff_tool.xml` (Compound Diff), as bobtemplates did.
+- **Destructive profile renders**: `portlets.xml` and `controlpanel.xml` were
+  static template renders — a second portlet/controlpanel overwrote the first.
+  Both are now idempotent post-copy merges. portlets.xml also regained the
+  bobtemplates `<for interface="...IColumn" />` entry and i18n attributes.
+- **XML escaping**: free-text answers (titles, descriptions) are escaped in
+  every hook/updater splice (`shared/utils/xml_escape.py`) and via explicit
+  `| e` filters in XML-emitting Jinja templates.
+- **behavior module name**: `my_behavior.py` instead of `imybehavior.py`
+  (was §1.1 below).
+- **form permission/layer**: form registrations restored to
+  `cmf.ManagePortal`; view and form registrations are bound to the package
+  browser layer again.
+- **svelte_app static resources**: restored the `plone:static` registration
+  for the bundle directory (`++plone++<pkg>.svelte`). Deviation from
+  bobtemplates: the directory is `svelte_apps/static` (the vite build
+  output) because `svelte_apps/` itself holds the Python mount-point
+  modules in the copier layout; vite output filenames now match the bundle
+  registry entries.
+- **restapi_service description**: verified the asked description lands in
+  the generated service module (regression report was against an older
+  state); covered by a render test now.
+- **CI**: new opt-in e2e smoke test (`tests/test_e2e_smoke.py`,
+  `-m integration`) generates an addon with content_type + behavior + view +
+  restapi_service, installs it into a real Plone site and runs the
+  generated package's own test suite.
+
+---
+
 ## 1. Subtemplate file/dir layout divergences (must-fix)
 
-### 1.1 `behavior`
+### 1.1 `behavior` — FIXED
 | legacy | new |
 |---|---|
-| `src/<pkg>/behaviors/my_behavior.py` | `src/<pkg>/behaviors/imybehavior.py` |
+| `src/<pkg>/behaviors/my_behavior.py` | `src/<pkg>/behaviors/my_behavior.py` ✓ |
 
-**Fix:** filename is `<snake_case(behavior_name)>.py`, not `i<lowercase(behavior_name)>.py`.
-Compute `behavior_module` from `behavior_name` with snake_case (e.g. `MyBehavior` →
-`my_behavior`). Keep the interface name `IMyBehavior` inside the file.
+`behavior_module` is now snake_case of the behavior class (`MyBehavior` →
+`my_behavior`; `IMyBehavior` interface name kept inside the file).
 
 ### 1.2 `content_type`
 | legacy | new |

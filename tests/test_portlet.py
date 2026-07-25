@@ -116,3 +116,60 @@ class TestPortletIntegration:
         assert parent_zcml.read_text().count(
             '<include package=".portlets" />'
         ) == 1
+
+
+class TestPortletProfileMerge:
+    """portlets.xml is merged idempotently (bobtemplates parity)."""
+
+    def _apply(self, fresh_addon, portlet_template, name="Weather", **extra):
+        data = {"portlet_name": name, "package_name": "collective.mypackage"}
+        data.update(extra)
+        result = apply_subtemplate(portlet_template, fresh_addon, data=data)
+        assert result.returncode == 0, f"copier failed: {result.stderr}"
+
+    def _portlets_xml(self, fresh_addon):
+        return (
+            fresh_addon
+            / "src/collective/mypackage/profiles/default/portlets.xml"
+        )
+
+    def test_two_portlets_coexist(self, fresh_addon, portlet_template):
+        self._apply(fresh_addon, portlet_template, name="Weather")
+        self._apply(fresh_addon, portlet_template, name="NewsFlash")
+        content = self._portlets_xml(fresh_addon).read_text()
+        assert 'addview="collective.mypackage.Weather"' in content
+        assert 'addview="collective.mypackage.NewsFlash"' in content
+
+    def test_rerun_adds_no_duplicates(self, fresh_addon, portlet_template):
+        self._apply(fresh_addon, portlet_template, name="Weather")
+        self._apply(fresh_addon, portlet_template, name="Weather")
+        content = self._portlets_xml(fresh_addon).read_text()
+        assert content.count('addview="collective.mypackage.Weather"') == 1
+
+    def test_entry_has_column_for_and_i18n(self, fresh_addon, portlet_template):
+        self._apply(
+            fresh_addon,
+            portlet_template,
+            name="Weather",
+            portlet_description="Weather portlet",
+        )
+        content = self._portlets_xml(fresh_addon).read_text()
+        assert (
+            '<for interface="plone.app.portlets.interfaces.IColumn" />'
+            in content
+        )
+        assert "i18n:attributes=" in content
+        assert 'description="Weather portlet"' in content
+
+    def test_hostile_description_stays_wellformed(
+        self, fresh_addon, portlet_template
+    ):
+        import xml.etree.ElementTree as ET
+
+        self._apply(
+            fresh_addon,
+            portlet_template,
+            name="Weather",
+            portlet_description='W & <b> "quoted"',
+        )
+        ET.parse(self._portlets_xml(fresh_addon))

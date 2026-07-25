@@ -43,7 +43,7 @@ class TestMultipleSubtemplates:
 
         # Verify both exist
         assert_file_exists(pkg_dir / "src/collective/news/content/news_item.py")
-        assert_file_exists(pkg_dir / "src/collective/news/behaviors/ifeatured.py")
+        assert_file_exists(pkg_dir / "src/collective/news/behaviors/featured.py")
 
         # Verify both registered in settings
         pyproject = pkg_dir / "pyproject.toml"
@@ -102,7 +102,7 @@ class TestMultipleSubtemplates:
 
         # Verify all exist
         assert_file_exists(pkg_dir / "src/collective/portal/content/article.py")
-        assert_file_exists(pkg_dir / "src/collective/portal/behaviors/isocial.py")
+        assert_file_exists(pkg_dir / "src/collective/portal/behaviors/social.py")
         assert_file_exists(pkg_dir / "src/collective/portal/services/analytics.py")
 
         # Verify all registered
@@ -228,7 +228,7 @@ class TestFullStackIntegration:
         assert_file_exists(project_dir / "pyproject.toml")
         assert_file_exists(addon_dir / "pyproject.toml")
         assert_file_exists(addon_dir / "src/collective/mysite/content/page.py")
-        assert_file_exists(addon_dir / "src/collective/mysite/behaviors/isocial.py")
+        assert_file_exists(addon_dir / "src/collective/mysite/behaviors/social.py")
         assert_file_exists(addon_dir / "src/collective/mysite/services/stats.py")
 
         # Verify project has correct settings
@@ -316,9 +316,9 @@ class TestSubtemplateMultipleInstances:
             )
 
         # Verify all exist
-        assert_file_exists(pkg_dir / "src/my/pkg/behaviors/ifeatured.py")
-        assert_file_exists(pkg_dir / "src/my/pkg/behaviors/itaggable.py")
-        assert_file_exists(pkg_dir / "src/my/pkg/behaviors/isocial.py")
+        assert_file_exists(pkg_dir / "src/my/pkg/behaviors/featured.py")
+        assert_file_exists(pkg_dir / "src/my/pkg/behaviors/taggable.py")
+        assert_file_exists(pkg_dir / "src/my/pkg/behaviors/social.py")
 
         # Verify all registered
         pyproject = pkg_dir / "pyproject.toml"

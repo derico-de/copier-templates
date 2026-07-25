@@ -137,3 +137,52 @@ class TestControlpanelIntegration:
         assert parent_zcml.read_text().count(
             '<include package=".controlpanels" />'
         ) == 1
+
+
+class TestControlpanelProfileMerge:
+    """controlpanel.xml is merged idempotently (bobtemplates parity)."""
+
+    def _apply(self, fresh_addon, controlpanel_template, name="MyFeatured", **extra):
+        data = {
+            "controlpanel_name": name,
+            "package_name": "collective.mypackage",
+        }
+        data.update(extra)
+        result = apply_subtemplate(
+            controlpanel_template, fresh_addon, data=data
+        )
+        assert result.returncode == 0, f"copier failed: {result.stderr}"
+
+    def _controlpanel_xml(self, fresh_addon):
+        return (
+            fresh_addon
+            / "src/collective/mypackage/profiles/default/controlpanel.xml"
+        )
+
+    def test_two_configlets_coexist(self, fresh_addon, controlpanel_template):
+        self._apply(fresh_addon, controlpanel_template, name="MyFeatured")
+        self._apply(fresh_addon, controlpanel_template, name="OtherPanel")
+        content = self._controlpanel_xml(fresh_addon).read_text()
+        assert 'action_id="my-featured-controlpanel"' in content
+        assert 'action_id="other-panel-controlpanel"' in content
+
+    def test_rerun_adds_no_duplicates(
+        self, fresh_addon, controlpanel_template
+    ):
+        self._apply(fresh_addon, controlpanel_template, name="MyFeatured")
+        self._apply(fresh_addon, controlpanel_template, name="MyFeatured")
+        content = self._controlpanel_xml(fresh_addon).read_text()
+        assert content.count('action_id="my-featured-controlpanel"') == 1
+
+    def test_hostile_title_stays_wellformed(
+        self, fresh_addon, controlpanel_template
+    ):
+        import xml.etree.ElementTree as ET
+
+        self._apply(
+            fresh_addon,
+            controlpanel_template,
+            name="MyFeatured",
+            controlpanel_title='Featured & <special> "panel"',
+        )
+        ET.parse(self._controlpanel_xml(fresh_addon))

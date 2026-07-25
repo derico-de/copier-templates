@@ -39,7 +39,7 @@ class TestControlPanel{{ controlpanel_name }}:
 
     def test_restapi_controlpanel_adapter(self):
         """Test plone.restapi control panel adapter is registered."""
-        from plone.restapi.interfaces import IControlpanel
+        from plone.restapi.controlpanels.interfaces import IControlpanel
         from zope.component import getMultiAdapter
         from zope.publisher.browser import TestRequest
 

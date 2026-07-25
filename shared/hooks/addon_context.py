@@ -165,6 +165,45 @@ class AddonContext:
         )
         return False
 
+    def add_profile_dependency(self, dependency: str) -> None:
+        """Idempotently declare ``dependency`` in profiles/default/metadata.xml."""
+        if not self.package_folder:
+            return
+        from utils.xml_updater import MetadataXMLUpdater
+
+        metadata_path = (
+            self.dest / f"src/{self.package_folder}/profiles/default/metadata.xml"
+        )
+        if MetadataXMLUpdater(metadata_path).add_dependency(dependency):
+            print(f"Added {dependency} dependency to metadata.xml.")
+        else:
+            print(f"{dependency} already in metadata.xml.")
+
+    def browser_layer(self) -> Optional[str]:
+        """Return the addon's browser-layer interface dotted path, or None.
+
+        Uses the backend_addon naming convention
+        (``I<TitleCasedPackageName>Layer`` in ``interfaces.py``) and only
+        returns a path if that class actually exists in the package's
+        ``interfaces.py``, so registrations never reference a missing layer.
+        """
+        if not self.package_name or not self.package_folder:
+            return None
+        klass = (
+            "I"
+            + self.package_name.replace(".", " ").replace("_", " ")
+            .title()
+            .replace(" ", "")
+            + "Layer"
+        )
+        interfaces_py = self.dest / f"src/{self.package_folder}/interfaces.py"
+        try:
+            if klass not in interfaces_py.read_text():
+                return None
+        except OSError:
+            return None
+        return f"{self.package_name}.interfaces.{klass}"
+
 
 def _looks_like_addon_root(path: Path) -> bool:
     """Path contains addon markers (pyproject.toml, setup.py, bobtemplate.cfg)."""

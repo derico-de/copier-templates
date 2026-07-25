@@ -11,7 +11,11 @@ from hooks.addon_context import (  # noqa: E402
     resolve_post_copy_context,
 )
 from hooks.git_check import warn_git_unclean  # noqa: E402
-from utils.xml_updater import ParentZCMLUpdater, extend_configure_zcml  # noqa: E402
+from utils.xml_updater import (  # noqa: E402
+    ControlPanelXMLUpdater,
+    ParentZCMLUpdater,
+    extend_configure_zcml,
+)
 
 
 def validate(dest_path: str) -> None:
@@ -29,6 +33,7 @@ def post_copy(
     controlpanel_name: str,
     controlpanel_url_id: str = "",
     controlpanel_module: str = "",
+    controlpanel_title: str = "",
 ) -> None:
     ctx = resolve_post_copy_context(dest_path)
     if ctx is None or not ctx.package_folder:
@@ -74,9 +79,10 @@ def post_copy(
     adapter_snippet = (
         "  <adapter\n"
         f'      factory="{adapter_factory}"\n'
-        '      provides="plone.restapi.interfaces.IControlpanel"\n'
+        '      provides="plone.restapi.controlpanels.interfaces.IControlpanel"\n'
         '      for="Products.CMFPlone.interfaces.IPloneSiteRoot\n'
-        "           zope.interface.Interface\"\n"
+        '           zope.interface.Interface"\n'
+        f'      name="{controlpanel_url_id}"\n'
         "      />\n"
     )
     _, msg = extend_configure_zcml(
@@ -89,6 +95,20 @@ def post_copy(
         snippet=adapter_snippet,
     )
     print(msg)
+
+    # Idempotently merge the configlet into profiles/default/controlpanel.xml
+    controlpanel_xml = (
+        dest / f"src/{package_folder}/profiles/default/controlpanel.xml"
+    )
+    cp_updater = ControlPanelXMLUpdater(controlpanel_xml)
+    if cp_updater.add_configlet(
+        package_name or "package",
+        action_id=controlpanel_url_id,
+        title=controlpanel_title or controlpanel_name,
+    ):
+        print(f"Added configlet '{controlpanel_url_id}' to controlpanel.xml.")
+    else:
+        print(f"Configlet '{controlpanel_url_id}' already in controlpanel.xml.")
 
     parent_zcml = dest / f"src/{package_folder}/configure.zcml"
     if parent_zcml.exists():

@@ -81,12 +81,23 @@ behavior_interface:
   default: "{{ behavior_name if behavior_name.startswith('I') else 'I' + behavior_name }}"
   when: false
 
-behavior_module:
-  type: str
-  default: "{{ behavior_interface | lower }}"
-  when: false
-
 behavior_class:
   type: str
   default: "{{ behavior_interface[1:] if behavior_interface.startswith('I') else behavior_interface }}"
+  when: false
+
+# Computed: PascalCase class -> snake_case module (bobtemplates layout:
+# my_behavior.py, not imybehavior.py)
+behavior_module:
+  type: str
+  default: >-
+    {%- set ns = namespace(out='') -%}
+    {%- for ch in behavior_class -%}
+    {%- if ch.isupper() and ns.out -%}
+    {%- set ns.out = ns.out + '_' + ch|lower -%}
+    {%- else -%}
+    {%- set ns.out = ns.out + ch|lower -%}
+    {%- endif -%}
+    {%- endfor -%}
+    {{ ns.out }}
   when: false

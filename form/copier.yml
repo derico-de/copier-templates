@@ -65,6 +65,12 @@ package_folder:
   help: "Parent addon package folder (e.g., collective/mypackage)"
   default: "{{ package_name | replace('.', '/') }}"
 
+# Computed: the addon's browser layer interface name (backend_addon convention)
+browser_layer_name:
+  type: str
+  default: "I{{ package_name.replace('.', ' ').replace('_', ' ').title().replace(' ', '') }}Layer"
+  when: false
+
 # Computed: PascalCase -> snake_case module
 form_module:
   type: str

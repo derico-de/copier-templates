@@ -4,7 +4,7 @@
   <record field="site_title"
           interface="plone.base.interfaces.controlpanel.ISiteSchema"
           name="plone.site_title">
-    <value>{{ site_name }}</value>
+    <value>{{ site_name | e }}</value>
   </record>
 
 </registry>

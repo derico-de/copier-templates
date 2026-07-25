@@ -272,3 +272,67 @@ class TestRestapiServiceEdgeCases:
         )
         zcml_file = addon_dir / "src/collective/mypackage/services/configure.zcml"
         assert_file_exists(zcml_file, content_contains=f'for="{custom}"')
+
+
+class TestRestapiServiceProfileWiring:
+    """metadata.xml dependency and description propagation."""
+
+    @pytest.fixture
+    def addon_dir(self, temp_dir, backend_addon_template):
+        pkg_dir = temp_dir / "mypackage"
+        run_copier(
+            backend_addon_template,
+            pkg_dir,
+            data={"package_name": "collective.mypackage"},
+        )
+        return pkg_dir
+
+    def _apply(self, addon_dir, restapi_service_template, **extra):
+        data = {
+            "service_name": "stats",
+            "package_name": "collective.mypackage",
+        }
+        data.update(extra)
+        result = run_copier(restapi_service_template, addon_dir, data=data)
+        assert result.returncode == 0, f"copier failed: {result.stderr}"
+
+    def test_metadata_gains_restapi_dependency(
+        self, addon_dir, restapi_service_template
+    ):
+        self._apply(addon_dir, restapi_service_template)
+        metadata = (
+            addon_dir
+            / "src/collective/mypackage/profiles/default/metadata.xml"
+        )
+        assert_file_exists(
+            metadata,
+            content_contains=(
+                "<dependency>profile-plone.restapi:default</dependency>"
+            ),
+        )
+
+    def test_metadata_dependency_added_exactly_once(
+        self, addon_dir, restapi_service_template
+    ):
+        self._apply(addon_dir, restapi_service_template, service_name="stats")
+        self._apply(addon_dir, restapi_service_template, service_name="info")
+        content = (
+            addon_dir
+            / "src/collective/mypackage/profiles/default/metadata.xml"
+        ).read_text()
+        assert content.count("profile-plone.restapi:default") == 1
+
+    def test_service_description_lands_in_module(
+        self, addon_dir, restapi_service_template
+    ):
+        self._apply(
+            addon_dir,
+            restapi_service_template,
+            service_description="Aggregated usage statistics",
+        )
+        service = (
+            addon_dir / "src/collective/mypackage/services/stats.py"
+        )
+        assert_file_exists(
+            service, content_contains="Aggregated usage statistics"
+        )

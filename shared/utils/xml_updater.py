@@ -4,6 +4,8 @@ import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from .xml_escape import escape_xml_attr
+
 
 class ConfigureZCMLUpdater:
     """Updates content/configure.zcml with plone:behavior entries."""
@@ -90,8 +92,8 @@ class ConfigureZCMLUpdater:
             return
 
         behavior_entry = self.BEHAVIOR_TEMPLATE.format(
-            title=title,
-            description=description,
+            title=escape_xml_attr(title),
+            description=escape_xml_attr(description),
             provides=provides,
         )
 
@@ -505,7 +507,16 @@ class ParentFTIUpdater:
 
 
 class MetadataXMLUpdater:
-    """Reads and updates profiles/default/metadata.xml version."""
+    """Reads and updates profiles/default/metadata.xml version and dependencies."""
+
+    TEMPLATE = '''\
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <version>1000</version>
+  <dependencies>
+  </dependencies>
+</metadata>
+'''
 
     def __init__(self, path: Path | str):
         self.path = Path(path)
@@ -535,6 +546,334 @@ class MetadataXMLUpdater:
         )
         if updated != content:
             self.path.write_text(updated)
+
+    def has_dependency(self, dependency: str) -> bool:
+        """Return True if the profile already declares ``dependency``."""
+        if not self.path.exists():
+            return False
+        content = self.path.read_text()
+        pattern = (
+            r"<dependency>\s*" + re.escape(dependency) + r"\s*</dependency>"
+        )
+        return bool(re.search(pattern, content))
+
+    def add_dependency(self, dependency: str) -> bool:
+        """Idempotently append ``dependency`` to ``<dependencies>``.
+
+        Creates the metadata file (and the ``<dependencies>`` section)
+        when absent. Returns True if the file was changed.
+        """
+        if not self.path.exists():
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(self.TEMPLATE)
+        if self.has_dependency(dependency):
+            return False
+        content = self.path.read_text()
+        entry = f"    <dependency>{dependency}</dependency>\n"
+
+        # Self-closing <dependencies/> -> expand to open/close form.
+        match = re.search(r"([ \t]*)<dependencies\s*/>", content)
+        if match:
+            indent = match.group(1)
+            replacement = (
+                f"{indent}<dependencies>\n{entry}{indent}</dependencies>"
+            )
+            content = content[: match.start()] + replacement + content[match.end():]
+            self.path.write_text(content)
+            return True
+
+        # Existing <dependencies>...</dependencies> section.
+        match = re.search(r"[ \t]*</dependencies>", content)
+        if match:
+            content = content[: match.start()] + entry + content[match.start():]
+            self.path.write_text(content)
+            return True
+
+        # No dependencies section yet: add one before </metadata>.
+        closing = "</metadata>"
+        if closing in content:
+            section = f"  <dependencies>\n{entry}  </dependencies>\n"
+            content = content.replace(closing, f"{section}{closing}", 1)
+            self.path.write_text(content)
+            return True
+
+        return False
+
+
+class RepositoryToolXMLUpdater:
+    """Updates profiles/default/repositorytool.xml with versioning policies.
+
+    Registers a portal type for CMFEditions versioning the way
+    bobtemplates.plone did: ``at_edit_autoversion`` and
+    ``version_on_revert`` policies inside ``<policymap>``.
+    """
+
+    TEMPLATE = '''\
+<?xml version="1.0"?>
+<repositorytool>
+  <policymap>
+  </policymap>
+</repositorytool>
+'''
+
+    TYPE_TEMPLATE = '''\
+    <type name="{portal_type}">
+      <policy name="at_edit_autoversion"/>
+      <policy name="version_on_revert"/>
+    </type>
+'''
+
+    def __init__(self, path: Path | str):
+        self.path = Path(path)
+
+    def has_type(self, portal_type: str) -> bool:
+        if not self.path.exists():
+            return False
+        content = self.path.read_text()
+        pattern = rf'<type\s+name\s*=\s*["\']{re.escape(portal_type)}["\']'
+        return bool(re.search(pattern, content))
+
+    def add_type(self, portal_type: str) -> bool:
+        """Idempotently register ``portal_type`` for versioning."""
+        if not self.path.exists():
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(self.TEMPLATE)
+        if self.has_type(portal_type):
+            return False
+        content = self.path.read_text()
+        entry = self.TYPE_TEMPLATE.format(portal_type=portal_type)
+
+        match = re.search(r"([ \t]*)<policymap\s*/>", content)
+        if match:
+            indent = match.group(1)
+            replacement = f"{indent}<policymap>\n{entry}{indent}</policymap>"
+            content = content[: match.start()] + replacement + content[match.end():]
+            self.path.write_text(content)
+            return True
+
+        match = re.search(r"[ \t]*</policymap>", content)
+        if match:
+            content = content[: match.start()] + entry + content[match.start():]
+            self.path.write_text(content)
+            return True
+
+        return False
+
+
+class DiffToolXMLUpdater:
+    """Updates profiles/default/diff_tool.xml with compound-diff entries.
+
+    Registers a portal type with the diff tool the way bobtemplates.plone
+    did: a ``Compound Diff for Dexterity types`` field entry inside
+    ``<difftypes>``.
+    """
+
+    TEMPLATE = '''\
+<?xml version="1.0"?>
+<object>
+  <difftypes>
+  </difftypes>
+</object>
+'''
+
+    TYPE_TEMPLATE = '''\
+    <type portal_type="{portal_type}">
+      <field name="any" difftype="Compound Diff for Dexterity types"/>
+    </type>
+'''
+
+    def __init__(self, path: Path | str):
+        self.path = Path(path)
+
+    def has_type(self, portal_type: str) -> bool:
+        if not self.path.exists():
+            return False
+        content = self.path.read_text()
+        pattern = (
+            rf'<type\s+portal_type\s*=\s*["\']{re.escape(portal_type)}["\']'
+        )
+        return bool(re.search(pattern, content))
+
+    def add_type(self, portal_type: str) -> bool:
+        """Idempotently register ``portal_type`` with the diff tool."""
+        if not self.path.exists():
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(self.TEMPLATE)
+        if self.has_type(portal_type):
+            return False
+        content = self.path.read_text()
+        entry = self.TYPE_TEMPLATE.format(portal_type=portal_type)
+
+        match = re.search(r"([ \t]*)<difftypes\s*/>", content)
+        if match:
+            indent = match.group(1)
+            replacement = f"{indent}<difftypes>\n{entry}{indent}</difftypes>"
+            content = content[: match.start()] + replacement + content[match.end():]
+            self.path.write_text(content)
+            return True
+
+        match = re.search(r"[ \t]*</difftypes>", content)
+        if match:
+            content = content[: match.start()] + entry + content[match.start():]
+            self.path.write_text(content)
+            return True
+
+        return False
+
+
+class PortletsXMLUpdater:
+    """Updates profiles/default/portlets.xml with GS portlet entries.
+
+    Shared idempotent merge (like types.xml / configure.zcml) so repeated
+    portlet generation is additive instead of overwriting the file.
+    """
+
+    TEMPLATE = '''\
+<?xml version="1.0"?>
+<portlets
+    xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+    i18n:domain="{package_name}">
+</portlets>
+'''
+
+    PORTLET_TEMPLATE = '''\
+
+  <portlet
+      addview="{addview}"
+      title="{title}"
+      description="{description}"
+      i18n:attributes="title title_{portlet_module};
+                       description description_{portlet_module}"
+      >
+
+    <!-- This enables the portlet for right column,
+         left column and the footer. -->
+    <for interface="plone.app.portlets.interfaces.IColumn" />
+
+    <!-- This would enable the portlet in the dashboard. -->
+    <!--<for interface="plone.app.portlets.interfaces.IDashboard" />-->
+
+  </portlet>
+'''
+
+    def __init__(self, path: Path | str):
+        self.path = Path(path)
+
+    def has_portlet(self, addview: str) -> bool:
+        if not self.path.exists():
+            return False
+        content = self.path.read_text()
+        pattern = rf'addview\s*=\s*["\']{re.escape(addview)}["\']'
+        return bool(re.search(pattern, content))
+
+    def add_portlet(
+        self,
+        package_name: str,
+        addview: str,
+        title: str,
+        description: str,
+        portlet_module: str,
+    ) -> bool:
+        """Idempotently append a ``<portlet>`` entry. Return True on change."""
+        if not self.path.exists():
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(
+                self.TEMPLATE.format(package_name=package_name)
+            )
+        if self.has_portlet(addview):
+            return False
+        content = self._ensure_i18n_namespace(self.path.read_text())
+        entry = self.PORTLET_TEMPLATE.format(
+            addview=addview,
+            title=escape_xml_attr(title),
+            description=escape_xml_attr(description),
+            portlet_module=portlet_module,
+        )
+        closing = "</portlets>"
+        if closing not in content:
+            return False
+        self.path.write_text(content.replace(closing, f"{entry}\n{closing}", 1))
+        return True
+
+    @staticmethod
+    def _ensure_i18n_namespace(content: str) -> str:
+        """Declare xmlns:i18n on the root if a pre-merge file lacks it."""
+        if "xmlns:i18n" in content:
+            return content
+        match = re.search(r"<portlets\b[^>]*>", content)
+        if not match:
+            return content
+        opening = match.group(0)
+        new_opening = (
+            opening[:-1].rstrip()
+            + '\n    xmlns:i18n="http://xml.zope.org/namespaces/i18n">'
+        )
+        return content.replace(opening, new_opening, 1)
+
+
+class ControlPanelXMLUpdater:
+    """Updates profiles/default/controlpanel.xml with configlet entries.
+
+    Shared idempotent merge so repeated controlpanel generation is
+    additive instead of overwriting the file.
+    """
+
+    TEMPLATE = '''\
+<?xml version="1.0"?>
+<object name="portal_controlpanel" meta_type="Plone Control Panel Tool">
+</object>
+'''
+
+    CONFIGLET_TEMPLATE = '''\
+
+  <configlet
+      title="{title}"
+      action_id="{action_id}"
+      appId="{package_name}"
+      category="Products"
+      condition_expr=""
+      url_expr="string:${{portal_url}}/@@{action_id}"
+      visible="True"
+      i18n:attributes="title"
+      i18n:domain="{package_name}"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n">
+    <permission>Manage portal</permission>
+  </configlet>
+'''
+
+    def __init__(self, path: Path | str):
+        self.path = Path(path)
+
+    def has_configlet(self, action_id: str) -> bool:
+        if not self.path.exists():
+            return False
+        content = self.path.read_text()
+        pattern = rf'action_id\s*=\s*["\']{re.escape(action_id)}["\']'
+        return bool(re.search(pattern, content))
+
+    def add_configlet(
+        self,
+        package_name: str,
+        action_id: str,
+        title: str,
+    ) -> bool:
+        """Idempotently append a ``<configlet>`` entry. Return True on change."""
+        if not self.path.exists():
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(self.TEMPLATE)
+        if self.has_configlet(action_id):
+            return False
+        content = self.path.read_text()
+        entry = self.CONFIGLET_TEMPLATE.format(
+            title=escape_xml_attr(title),
+            action_id=action_id,
+            package_name=package_name,
+        )
+        closing = "</object>"
+        if closing not in content:
+            return False
+        self.path.write_text(content.replace(closing, f"{entry}\n{closing}", 1))
+        return True
 
 
 class UpgradeZCMLUpdater:

@@ -4,7 +4,7 @@ import subprocess
 import textwrap
 
 import pytest
-from helpers import assert_file_exists, run_copier
+from helpers import assert_file_exists, plone_subprocess_env, run_copier
 
 
 class TestUpgradeStepRequiresAddon:
@@ -452,6 +452,7 @@ class TestUpgradeStepInPloneSite:
         sync = subprocess.run(
             ["uv", "sync", "--extra", "test"],
             cwd=addon_dir,
+            env=plone_subprocess_env(),
             capture_output=True,
             text=True,
             timeout=900,
@@ -468,6 +469,7 @@ class TestUpgradeStepInPloneSite:
                 "-v", "--tb=short",
             ],
             cwd=addon_dir,
+            env=plone_subprocess_env(),
             capture_output=True,
             text=True,
             timeout=600,

@@ -1,9 +1,23 @@
 """Test helper utilities for copier-templates tests."""
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+
+
+def plone_subprocess_env() -> dict[str, str]:
+    """Environment for running a generated addon's own uv/pytest.
+
+    Strips this repo's PYTHONPATH/VIRTUAL_ENV so the generated addon's
+    environment doesn't import the outer test venv's (potentially
+    incompatible) packages.
+    """
+    env = dict(os.environ)
+    env.pop("PYTHONPATH", None)
+    env.pop("VIRTUAL_ENV", None)
+    return env
 
 
 def run_copier(
