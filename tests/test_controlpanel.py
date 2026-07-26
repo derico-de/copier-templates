@@ -106,7 +106,15 @@ class TestControlpanelCreation:
             fresh_addon
             / "src/collective/mypackage/profiles/default/registry/my_featured.xml"
         )
-        assert_file_exists(reg, content_contains="IMyFeaturedSettings")
+        # The dotted name must point at the module defining the schema,
+        # not at the controlpanel package; GenericSetup imports it verbatim.
+        assert_file_exists(
+            reg,
+            content_contains=(
+                'interface="collective.mypackage.controlpanels'
+                '.my_featured.controlpanel.IMyFeaturedSettings"'
+            ),
+        )
 
 
 class TestControlpanelIntegration:
