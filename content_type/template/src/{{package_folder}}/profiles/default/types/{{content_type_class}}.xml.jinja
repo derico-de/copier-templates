@@ -5,8 +5,8 @@
     meta_type="Dexterity FTI"
     i18n:domain="{{ package_name }}">
 
-  <property name="title" i18n:translate="">{{ content_type_name }}</property>
-  <property name="description" i18n:translate="">{{ content_type_description }}</property>
+  <property name="title" i18n:translate="">{{ content_type_name | e }}</property>
+  <property name="description" i18n:translate="">{{ content_type_description | e }}</property>
   <property name="icon_expr">string:plone-content-icon {{ content_type_icon }}</property>
   <property name="factory">{{ content_type_class }}</property>
   <property name="add_view_expr">string:${folder_url}/++add++{{ content_type_class }}</property>

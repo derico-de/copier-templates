@@ -11,7 +11,11 @@ from hooks.addon_context import (  # noqa: E402
     resolve_post_copy_context,
 )
 from hooks.git_check import warn_git_unclean  # noqa: E402
-from utils.xml_updater import ParentZCMLUpdater, extend_configure_zcml  # noqa: E402
+from utils.xml_updater import (  # noqa: E402
+    ParentZCMLUpdater,
+    PortletsXMLUpdater,
+    extend_configure_zcml,
+)
 
 
 def validate(dest_path: str) -> None:
@@ -28,6 +32,7 @@ def post_copy(
     dest_path: str,
     portlet_name: str,
     portlet_module: str = "",
+    portlet_description: str = "A custom portlet",
 ) -> None:
     ctx = resolve_post_copy_context(dest_path)
     if ctx is None or not ctx.package_folder:
@@ -68,6 +73,20 @@ def post_copy(
         snippet=snippet,
     )
     print(msg)
+
+    # Idempotently merge the GS portlet entry into profiles/default/portlets.xml
+    portlets_xml = dest / f"src/{package_folder}/profiles/default/portlets.xml"
+    portlets_updater = PortletsXMLUpdater(portlets_xml)
+    if portlets_updater.add_portlet(
+        package_name or "package",
+        addview=registration_name,
+        title=portlet_name,
+        description=portlet_description,
+        portlet_module=portlet_module,
+    ):
+        print(f"Added portlet '{registration_name}' to portlets.xml.")
+    else:
+        print(f"Portlet '{registration_name}' already in portlets.xml.")
 
     parent_zcml = dest / f"src/{package_folder}/configure.zcml"
     if parent_zcml.exists():

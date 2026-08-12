@@ -72,11 +72,12 @@ behaviors = []
 services = []
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["src/{{ package_folder }}/tests"]
 python_files = ["test_*.py"]
 
 [tool.coverage.run]
 source = ["{{ package_name }}"]
+omit = ["*/tests/*"]
 
 [tool.ruff]
 line-length = 100
@@ -98,7 +99,7 @@ select = [
 ignore = ["E731"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]
+"src/**/tests/**" = ["S101"]
 # Locale update helper shells out to fixed translation tools (i18ndude/msginit).
 "src/**/locales/update.py" = ["S603", "S607"]
 

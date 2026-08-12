@@ -130,9 +130,22 @@ content_type_class:
   default: "{{ content_type_name | replace(' ', '') | replace('-', '') | replace('_', '') }}"
   when: false
 
+# Computed: snake_case of the name (bobtemplates get_normalized_dxtypename:
+# spaces -> underscores, then snakecase; 'MyContentType' -> my_content_type,
+# 'Todo task' -> todo_task)
 content_type_module:
   type: str
-  default: "{{ content_type_name | lower | replace(' ', '_') | replace('-', '_') }}"
+  default: >-
+    {%- set src = content_type_name | replace(' ', '_') | replace('-', '_') -%}
+    {%- set ns = namespace(out='') -%}
+    {%- for ch in src -%}
+    {%- if ch.isupper() and ns.out and not ns.out.endswith('_') -%}
+    {%- set ns.out = ns.out + '_' + ch|lower -%}
+    {%- else -%}
+    {%- set ns.out = ns.out + ch|lower -%}
+    {%- endif -%}
+    {%- endfor -%}
+    {{ ns.out }}
   when: false
 
 content_type_interface:

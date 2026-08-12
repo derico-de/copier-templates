@@ -50,6 +50,14 @@ class TestMockupPatternCreation:
             ],
         )
 
+    def test_creates_demo_page(self, fresh_addon, mockup_pattern_template):
+        """bobtemplates parity: the demo page filename is fixed."""
+        self._apply(fresh_addon, mockup_pattern_template)
+        assert_file_exists(
+            fresh_addon / "src/collective/mypackage/browser/pattern-demo.pt",
+            content_contains="pat-my-pattern",
+        )
+
     def test_creates_package_json(self, fresh_addon, mockup_pattern_template):
         self._apply(fresh_addon, mockup_pattern_template)
         pkg = fresh_addon / "src/collective/mypackage/patterns/package.json"

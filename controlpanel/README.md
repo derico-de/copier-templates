@@ -6,11 +6,13 @@ package. Must be run inside an addon directory.
 ## What it generates
 
 - `src/<package_folder>/controlpanels/__init__.py`
-- `src/<package_folder>/controlpanels/<module>.py` -- settings schema
-  (`I<Name>Settings`), `<Name>ControlPanelForm` (`RegistryEditForm`) and
-  `<Name>ControlPanelView` (`ControlPanelFormWrapper`)
-- `src/<package_folder>/controlpanels/configure.zcml` -- `browser:page`
-  registration bound to `IPloneSiteRoot`
+- `src/<package_folder>/controlpanels/<module>/` -- subpackage
+  (bobtemplates layout) with `controlpanel.py` (settings schema
+  `I<Name>Settings`, `<Name>ControlPanelForm` (`RegistryEditForm`) and
+  `<Name>ControlPanelView` (`ControlPanelFormWrapper`)) and its own
+  `configure.zcml` (`browser:page` registration bound to `IPloneSiteRoot`)
+- `src/<package_folder>/controlpanels/configure.zcml` -- includes the
+  subpackage
 - `src/<package_folder>/profiles/default/controlpanel.xml` -- configlet
   entry under `portal_controlpanel`
 - `src/<package_folder>/profiles/default/registry/<module>.xml` --

@@ -46,14 +46,20 @@ def post_copy(
     package_name = ctx.package_name
     package_folder = ctx.package_folder
 
-    snippet = (
-        "  <browser:page\n"
-        f'      name="{form_name}"\n'
-        f'      for="{form_for}"\n'
-        f'      class=".{form_module}.{form_class_name}"\n'
-        '      permission="zope2.View"\n'
-        "      />\n"
-    )
+    # bobtemplates parity: forms are management-permission protected and
+    # bound to the package's browser layer.
+    layer = ctx.browser_layer()
+    lines = [
+        "  <browser:page",
+        f'      name="{form_name}"',
+        f'      for="{form_for}"',
+        f'      class=".{form_module}.{form_class_name}"',
+        '      permission="cmf.ManagePortal"',
+    ]
+    if layer:
+        lines.append(f'      layer="{layer}"')
+    lines.append("      />")
+    snippet = "\n".join(lines) + "\n"
     forms_zcml = dest / f"src/{package_folder}/forms/configure.zcml"
     _, msg = extend_configure_zcml(
         forms_zcml,

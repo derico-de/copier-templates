@@ -1,0 +1,20 @@
+"""{{ service_name }} REST API service — POST.
+
+{{ service_description }}
+"""
+from plone.restapi.services import Service
+
+
+class {{ service_class }}Post(Service):
+    """{{ service_description }}
+
+    Endpoint: POST {{ service_endpoint }}
+    """
+
+    def reply(self):
+        """Process the submitted data and return the JSON response."""
+        return {
+            "service": "{{ service_endpoint }}",
+            "method": "POST",
+            "status": "created",
+        }

@@ -11,15 +11,15 @@
 
   <genericsetup:registerProfile
       name="default"
-      title="{{ package_title }}"
-      description="{{ package_description }}"
+      title="{{ package_title | e }}"
+      description="{{ package_description | e }}"
       provides="Products.GenericSetup.interfaces.EXTENSION"
       directory="profiles/default"
       />
 
   <genericsetup:registerProfile
       name="uninstall"
-      title="{{ package_title }} (uninstall)"
+      title="{{ package_title | e }} (uninstall)"
       description="Uninstalls {{ package_name }}"
       provides="Products.GenericSetup.interfaces.EXTENSION"
       directory="profiles/uninstall"
@@ -27,7 +27,7 @@
 
   <genericsetup:importStep
       name="{{ package_name }}-uninstall"
-      title="{{ package_title }} uninstall"
+      title="{{ package_title | e }} uninstall"
       description="Uninstall {{ package_name }}"
       handler="{{ package_name }}.setuphandlers.uninstall"
       />

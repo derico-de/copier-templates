@@ -34,15 +34,8 @@ _tasks:
       - "post_copy"
       - "{{ _copier_conf.dst_path }}"
       - "{{ service_name }}"
-      - "{{ service_for_resolved }}"
       - "{{ service_module }}"
-      - "{{ service_class }}"
       - "{{ service_endpoint }}"
-      - "{{ http_get }}"
-      - "{{ http_post }}"
-      - "{{ http_patch }}"
-      - "{{ http_delete }}"
-      - "{{ expandable }}"
 
 # Service name
 service_name:
@@ -120,9 +113,11 @@ service_module:
   default: "{{ service_name | lower | replace('-', '_') | replace(' ', '_') }}"
   when: false
 
+# Computed: PascalCase base name; per-verb classes append Get/Post/... (
+# bobtemplates naming: StatsGet, StatsPost)
 service_class:
   type: str
-  default: "{{ service_name | replace('-', ' ') | replace('_', ' ') | title | replace(' ', '') }}Service"
+  default: "{{ service_name | replace('-', ' ') | replace('_', ' ') | title | replace(' ', '') }}"
   when: false
 
 service_endpoint:

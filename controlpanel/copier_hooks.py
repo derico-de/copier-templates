@@ -11,7 +11,11 @@ from hooks.addon_context import (  # noqa: E402
     resolve_post_copy_context,
 )
 from hooks.git_check import warn_git_unclean  # noqa: E402
-from utils.xml_updater import ParentZCMLUpdater, extend_configure_zcml  # noqa: E402
+from utils.xml_updater import (  # noqa: E402
+    ControlPanelXMLUpdater,
+    ParentZCMLUpdater,
+    extend_configure_zcml,
+)
 
 
 def validate(dest_path: str) -> None:
@@ -29,6 +33,7 @@ def post_copy(
     controlpanel_name: str,
     controlpanel_url_id: str = "",
     controlpanel_module: str = "",
+    controlpanel_title: str = "",
 ) -> None:
     ctx = resolve_post_copy_context(dest_path)
     if ctx is None or not ctx.package_folder:
@@ -49,46 +54,33 @@ def post_copy(
 
     cp_zcml = dest / f"src/{package_folder}/controlpanels/configure.zcml"
 
-    # Extend controlpanels/configure.zcml with the <browser:page> entry
-    page_snippet = (
-        "  <browser:page\n"
-        f'      name="{controlpanel_url_id}"\n'
-        '      for="Products.CMFPlone.interfaces.IPloneSiteRoot"\n'
-        f'      class=".{controlpanel_module}.{controlpanel_name}ControlPanelView"\n'
-        '      permission="cmf.ManagePortal"\n'
-        "      />\n"
-    )
+    # The subpackage ships its own configure.zcml (bobtemplates parity);
+    # controlpanels/configure.zcml only includes it.
+    include_snippet = f'  <include package=".{controlpanel_module}" />\n'
     _, msg = extend_configure_zcml(
         cp_zcml,
         package_name or "package",
         namespaces={"browser": "http://namespaces.zope.org/browser"},
-        element_tag="browser:page",
-        identifying_attr="name",
-        identifying_value=controlpanel_url_id,
-        snippet=page_snippet,
+        element_tag="include",
+        identifying_attr="package",
+        identifying_value=f".{controlpanel_module}",
+        snippet=include_snippet,
     )
     print(msg)
 
-    # Extend controlpanels/configure.zcml with the <adapter> entry (plone.restapi)
-    adapter_factory = f".{controlpanel_module}.{controlpanel_name}ControlPanelAdapter"
-    adapter_snippet = (
-        "  <adapter\n"
-        f'      factory="{adapter_factory}"\n'
-        '      provides="plone.restapi.interfaces.IControlpanel"\n'
-        '      for="Products.CMFPlone.interfaces.IPloneSiteRoot\n'
-        "           zope.interface.Interface\"\n"
-        "      />\n"
+    # Idempotently merge the configlet into profiles/default/controlpanel.xml
+    controlpanel_xml = (
+        dest / f"src/{package_folder}/profiles/default/controlpanel.xml"
     )
-    _, msg = extend_configure_zcml(
-        cp_zcml,
+    cp_updater = ControlPanelXMLUpdater(controlpanel_xml)
+    if cp_updater.add_configlet(
         package_name or "package",
-        namespaces={},
-        element_tag="adapter",
-        identifying_attr="factory",
-        identifying_value=adapter_factory,
-        snippet=adapter_snippet,
-    )
-    print(msg)
+        action_id=controlpanel_url_id,
+        title=controlpanel_title or controlpanel_name,
+    ):
+        print(f"Added configlet '{controlpanel_url_id}' to controlpanel.xml.")
+    else:
+        print(f"Configlet '{controlpanel_url_id}' already in controlpanel.xml.")
 
     parent_zcml = dest / f"src/{package_folder}/configure.zcml"
     if parent_zcml.exists():

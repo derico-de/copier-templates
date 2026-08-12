@@ -39,7 +39,7 @@ class TestBehaviorRequiresAddon:
         assert result.returncode == 0, f"Copier failed: {result.stderr}"
 
         # Verify behavior created
-        behavior_file = temp_dir / "mypackage/src/collective/mypackage/behaviors/ifeatured.py"
+        behavior_file = temp_dir / "mypackage/src/collective/mypackage/behaviors/featured.py"
         assert_file_exists(behavior_file)
 
 
@@ -68,7 +68,7 @@ class TestBehaviorCreation:
             },
         )
 
-        behavior_file = addon_dir / "src/collective/mypackage/behaviors/itaggable.py"
+        behavior_file = addon_dir / "src/collective/mypackage/behaviors/taggable.py"
         assert_file_exists(behavior_file)
 
     def test_creates_behaviors_init(self, addon_dir, behavior_template):
@@ -97,7 +97,7 @@ class TestBehaviorCreation:
         )
 
         zcml_file = addon_dir / "src/collective/mypackage/behaviors/configure.zcml"
-        assert_file_exists(zcml_file, content_contains='name="collective.mypackage.itaggable"')
+        assert_file_exists(zcml_file, content_contains='name="collective.mypackage.taggable"')
 
     def test_behavior_has_interface(self, addon_dir, behavior_template):
         """Behavior file contains interface."""
@@ -110,7 +110,7 @@ class TestBehaviorCreation:
             },
         )
 
-        behavior_file = addon_dir / "src/collective/mypackage/behaviors/itaggable.py"
+        behavior_file = addon_dir / "src/collective/mypackage/behaviors/taggable.py"
         assert_file_exists(behavior_file, content_contains="ITaggable")
 
 
@@ -185,7 +185,7 @@ class TestBehaviorEdgeCases:
             },
         )
 
-        behavior_file = addon_dir / "src/collective/mypackage/behaviors/isimple.py"
+        behavior_file = addon_dir / "src/collective/mypackage/behaviors/simple.py"
         content = behavior_file.read_text()
         assert "ISimpleMarker" not in content
 
@@ -205,7 +205,7 @@ class TestBehaviorEdgeCases:
             },
         )
 
-        behavior_file = addon_dir / "src/collective/mypackage/behaviors/ilight.py"
+        behavior_file = addon_dir / "src/collective/mypackage/behaviors/light.py"
         content = behavior_file.read_text()
         assert "@implementer" not in content
         assert "@adapter" not in content
@@ -244,7 +244,7 @@ class TestBehaviorEdgeCases:
             },
         )
 
-        behavior_file = addon_dir / "src/collective/mypackage/behaviors/idefault.py"
+        behavior_file = addon_dir / "src/collective/mypackage/behaviors/default.py"
         content = behavior_file.read_text()
         assert "IDefaultMarker" in content
         assert "@implementer" in content

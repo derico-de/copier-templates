@@ -45,7 +45,7 @@ def addon_dir(temp_dir, backend_addon_template):
                 "package_name": "collective.mypackage",
                 "behavior_description": HOSTILE,
             },
-            "src/collective/mypackage/behaviors/ithing.py",
+            "src/collective/mypackage/behaviors/thing.py",
         ),
         (
             "content_type_template",

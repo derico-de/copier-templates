@@ -16,8 +16,8 @@
       profile="{{ package_name }}:default">
 
     <genericsetup:upgradeStep
-        title="{{ upgrade_step_title }}"
-        description="{{ upgrade_step_description }}"
+        title="{{ upgrade_step_title | e }}"
+        description="{{ upgrade_step_description | e }}"
         handler=".v{{ destination_version }}.upgrade"
         />
 

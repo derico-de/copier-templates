@@ -60,7 +60,7 @@ _tasks:
 project_name:
   type: str
   help: "Project name (used for directory and package naming)"
-  default: "{{ addon_context.package_name | default('') }}"
+  default: "{{ addon_context.package_name | default(_copier_conf.dst_path.name) }}"
   validator: "{% if not project_name %}Project name is required{% endif %}"
   when: "{{ not addon_context }}"
 

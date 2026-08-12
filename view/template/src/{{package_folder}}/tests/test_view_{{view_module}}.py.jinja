@@ -7,8 +7,10 @@ from plone import api
 from plone.app.testing import setRoles
 from plone.app.testing import TEST_USER_ID
 from zope.component import getMultiAdapter
+from zope.interface import alsoProvides
 from zope.publisher.browser import TestRequest
 
+from {{ package_name }}.interfaces import {{ browser_layer_name }}
 from {{ package_name }}.testing import INTEGRATION_TESTING
 {%- if view_marker %}
 from {{ package_name }}.views.{{ view_module }} import I{{ view_class_name }}
@@ -19,6 +21,12 @@ class TestView{{ view_class_name }}:
     """Test {{ view_class_name }} view."""
 
     layer = INTEGRATION_TESTING
+
+    def _make_request(self):
+        """A request carrying the addon browser layer."""
+        request = TestRequest()
+        alsoProvides(request, {{ browser_layer_name }})
+        return request
 
     @pytest.fixture(autouse=True)
     def _setup(self, integration):
@@ -38,7 +46,7 @@ class TestView{{ view_class_name }}:
 
     def test_view_registered(self):
         """Test view is registered."""
-        request = TestRequest()
+        request = self._make_request()
         view = getMultiAdapter(
             (self.context, request),
             name="{{ view_name }}",
@@ -47,7 +55,7 @@ class TestView{{ view_class_name }}:
 
     def test_view_name(self):
         """Test view __name__."""
-        request = TestRequest()
+        request = self._make_request()
         view = getMultiAdapter(
             (self.context, request),
             name="{{ view_name }}",
@@ -57,7 +65,7 @@ class TestView{{ view_class_name }}:
 
     def test_view_marker_interface(self):
         """Test view provides marker interface."""
-        request = TestRequest()
+        request = self._make_request()
         view = getMultiAdapter(
             (self.context, request),
             name="{{ view_name }}",

@@ -21,6 +21,22 @@ class TestZopeSetupIsolated:
         assert_dir_exists(project_dir / "var/instance")
         assert_dir_exists(project_dir / "sources")
 
+    def test_project_name_defaults_to_dst_dir_name(self, temp_dir, zope_setup_template):
+        """Without a project_name answer, the destination dir name is used.
+
+        Copier validates a question's default before prompting, so an empty
+        default plus the required-validator crashed ``plonecli create project X``
+        before the prompt appeared.
+        """
+        result = run_copier(
+            zope_setup_template,
+            temp_dir / "derico.de",
+        )
+        assert result.returncode == 0, f"Copier failed: {result.stderr}"
+
+        answers = temp_dir / "derico.de/.copier-answers.zope-setup.yml"
+        assert_file_exists(answers, content_contains="project_name: derico.de")
+
     def test_pyproject_has_project_settings(self, temp_dir, zope_setup_template):
         """Zope-setup includes custom project settings namespace."""
         run_copier(

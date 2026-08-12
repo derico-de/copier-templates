@@ -1,0 +1,39 @@
+"""Tests for {{ service_name }} REST API service."""
+import pytest
+from plone.app.testing import setRoles
+from plone.app.testing import TEST_USER_ID
+
+from {{ package_name }}.testing import INTEGRATION_TESTING
+
+
+class TestService{{ service_class }}:
+    """Test {{ service_name }} REST API service."""
+
+    layer = INTEGRATION_TESTING
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, integration):
+        self.portal = integration["portal"]
+        setRoles(self.portal, TEST_USER_ID, ["Manager"])
+
+    def test_service_importable(self):
+        """Test the service class can be imported."""
+{%- if http_get or expandable %}
+        from {{ package_name }}.api.services.{{ service_module }}.get import {{ service_class }}{{ "Get" if http_get else "" }}
+
+        assert {{ service_class }}{{ "Get" if http_get else "" }} is not None
+{%- elif http_post %}
+        from {{ package_name }}.api.services.{{ service_module }}.post import {{ service_class }}Post
+
+        assert {{ service_class }}Post is not None
+{%- elif http_patch %}
+        from {{ package_name }}.api.services.{{ service_module }}.patch import {{ service_class }}Patch
+
+        assert {{ service_class }}Patch is not None
+{%- elif http_delete %}
+        from {{ package_name }}.api.services.{{ service_module }}.delete import {{ service_class }}Delete
+
+        assert {{ service_class }}Delete is not None
+{%- else %}
+        import {{ package_name }}.api.services.{{ service_module }}  # noqa: F401
+{%- endif %}

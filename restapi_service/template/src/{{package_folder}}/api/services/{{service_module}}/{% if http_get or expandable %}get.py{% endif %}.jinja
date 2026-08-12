@@ -1,0 +1,87 @@
+"""{{ service_name }} REST API service.
+
+{{ service_description }}
+"""
+{%- if expandable %}
+from plone.restapi.interfaces import IExpandableElement
+from plone.restapi.services import Service
+from zope.component import adapter
+from zope.interface import Interface
+from zope.interface import implementer
+
+
+@implementer(IExpandableElement)
+@adapter(Interface, Interface)
+class {{ service_class }}:
+    """Expandable element for {{ service_endpoint }}.
+
+    This adapter enriches existing REST API responses (e.g. content GET)
+    when the consumer requests ``?expand={{ service_module }}``.
+    """
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__(self, expand=False):
+        result = {
+            "{{ service_module }}": {
+                "@id": f"{self.context.absolute_url()}/{{ service_endpoint }}",
+            },
+        }
+        if not expand:
+            return result
+
+        # Populate the full response when expanded
+        result["{{ service_module }}"].update(
+            {
+                "items": [],
+                # Add your expanded data here
+            }
+        )
+        return result
+{%- if http_get %}
+
+
+class {{ service_class }}Get(Service):
+    """{{ service_description }}
+
+    Endpoint: GET {{ service_endpoint }}
+    """
+
+    def reply(self):
+        """Return the JSON response."""
+        element = {{ service_class }}(self.context, self.request)
+        return element(expand=True)
+{%- endif %}
+{%- else %}
+from plone.restapi.services import Service
+from zope.interface import implementer
+from zope.publisher.interfaces import IPublishTraverse
+
+
+@implementer(IPublishTraverse)
+class {{ service_class }}Get(Service):
+    """{{ service_description }}
+
+    Endpoint: GET {{ service_endpoint }}
+    """
+
+    def __init__(self, context, request):
+        super().__init__(context, request)
+        self.params = []
+
+    def publishTraverse(self, request, name):
+        """Handle URL path segments after the endpoint."""
+        self.params.append(name)
+        return self
+
+    def reply(self):
+        """Return the JSON response."""
+        return {
+            "service": "{{ service_endpoint }}",
+            "status": "ok",
+            "params": self.params,
+            # Add your response data here
+        }
+{%- endif %}

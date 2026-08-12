@@ -4,8 +4,10 @@ from plone import api
 from plone.app.testing import setRoles
 from plone.app.testing import TEST_USER_ID
 from zope.component import getMultiAdapter
+from zope.interface import alsoProvides
 from zope.publisher.browser import TestRequest
 
+from {{ package_name }}.interfaces import {{ browser_layer_name }}
 from {{ package_name }}.testing import INTEGRATION_TESTING
 
 
@@ -13,6 +15,12 @@ class TestForm{{ form_class_name }}:
     """Test {{ form_class_name }} form."""
 
     layer = INTEGRATION_TESTING
+
+    def _make_request(self):
+        """A request carrying the addon browser layer."""
+        request = TestRequest()
+        alsoProvides(request, {{ browser_layer_name }})
+        return request
 
     @pytest.fixture(autouse=True)
     def _setup(self, integration):
@@ -27,7 +35,7 @@ class TestForm{{ form_class_name }}:
 
     def test_form_registered(self):
         """Test form is registered."""
-        request = TestRequest()
+        request = self._make_request()
         view = getMultiAdapter(
             (self.doc, request),
             name="{{ form_name }}",
@@ -36,7 +44,7 @@ class TestForm{{ form_class_name }}:
 
     def test_form_name(self):
         """Test form __name__."""
-        request = TestRequest()
+        request = self._make_request()
         view = getMultiAdapter(
             (self.doc, request),
             name="{{ form_name }}",

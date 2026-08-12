@@ -88,3 +88,61 @@ class TestSvelteAppIntegration:
             "subtemplates"
         ]
         assert "dashboard-ui" in subtemplates["svelte_apps"]
+
+
+class TestSvelteStaticResource:
+    """The bundle directory is registered as a plone static resource."""
+
+    def _apply(self, fresh_addon, svelte_app_template):
+        result = apply_subtemplate(
+            svelte_app_template,
+            fresh_addon,
+            data={
+                "svelte_app_name": "my-app",
+                "package_name": "collective.mypackage",
+            },
+        )
+        assert result.returncode == 0, f"copier failed: {result.stderr}"
+
+    def test_parent_zcml_registers_static_directory(
+        self, fresh_addon, svelte_app_template
+    ):
+        self._apply(fresh_addon, svelte_app_template)
+        parent_zcml = fresh_addon / "src/collective/mypackage/configure.zcml"
+        assert_file_exists(
+            parent_zcml,
+            content_contains=[
+                "<plone:static",
+                'directory="svelte_apps/static"',
+                'name="collective.mypackage.svelte"',
+            ],
+        )
+
+    def test_static_registration_not_duplicated_on_rerun(
+        self, fresh_addon, svelte_app_template
+    ):
+        self._apply(fresh_addon, svelte_app_template)
+        self._apply(fresh_addon, svelte_app_template)
+        parent_zcml = fresh_addon / "src/collective/mypackage/configure.zcml"
+        content = parent_zcml.read_text()
+        assert content.count('name="collective.mypackage.svelte"') == 1
+
+    def test_static_directory_shipped(self, fresh_addon, svelte_app_template):
+        self._apply(fresh_addon, svelte_app_template)
+        static_dir = (
+            fresh_addon / "src/collective/mypackage/svelte_apps/static"
+        )
+        assert static_dir.is_dir()
+
+    def test_vite_builds_bundle_names_registry_expects(
+        self, fresh_addon, svelte_app_template
+    ):
+        self._apply(fresh_addon, svelte_app_template)
+        vite_config = fresh_addon / "svelte_src/my-app/vite.config.js"
+        assert_file_exists(
+            vite_config,
+            content_contains=[
+                'entryFileNames: "my-app-bundle.js"',
+                'assetFileNames: "my-app-bundle.[ext]"',
+            ],
+        )

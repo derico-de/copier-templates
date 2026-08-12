@@ -95,3 +95,45 @@ class TestThemeBarcelonetaIntegration:
                 'type="theme"',
             ],
         )
+
+
+class TestThemeProfileDependency:
+    """The generated profile depends on plone.app.theming."""
+
+    def test_metadata_gains_theming_dependency(self, fresh_addon, theme_barceloneta_template):
+        result = apply_subtemplate(
+            theme_barceloneta_template,
+            fresh_addon,
+            data={
+                "theme_name": "My Theme",
+                "package_name": "collective.mypackage",
+            },
+        )
+        assert result.returncode == 0, f"copier failed: {result.stderr}"
+        metadata = (
+            fresh_addon
+            / "src/collective/mypackage/profiles/default/metadata.xml"
+        )
+        assert_file_exists(
+            metadata,
+            content_contains=(
+                "<dependency>profile-plone.app.theming:default</dependency>"
+            ),
+        )
+
+    def test_theming_dependency_added_exactly_once(self, fresh_addon, theme_barceloneta_template):
+        for _ in range(2):
+            result = apply_subtemplate(
+                theme_barceloneta_template,
+                fresh_addon,
+                data={
+                    "theme_name": "My Theme",
+                    "package_name": "collective.mypackage",
+                },
+            )
+            assert result.returncode == 0, f"copier failed: {result.stderr}"
+        content = (
+            fresh_addon
+            / "src/collective/mypackage/profiles/default/metadata.xml"
+        ).read_text()
+        assert content.count("profile-plone.app.theming:default") == 1

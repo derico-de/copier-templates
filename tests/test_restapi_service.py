@@ -1,4 +1,9 @@
-"""Tests for restapi_service subtemplate."""
+"""Tests for restapi_service subtemplate.
+
+Mirrors the bobtemplates.plone layout: services live in nested
+``api/services/<name>/`` subpackages with one module per HTTP verb
+(``get.py``, ``post.py``, ...) and a self-contained ``configure.zcml``.
+"""
 import pytest
 from helpers import assert_file_exists, read_toml, run_copier
 
@@ -26,8 +31,8 @@ class TestRestapiServiceRequiresAddon:
         )
         assert result.returncode == 0, f"Copier failed: {result.stderr}"
 
-        # Verify service created
-        service_file = temp_dir / "mypackage/src/collective/mypackage/services/stats.py"
+        # Verify service created (bobtemplates api/services/<name>/ layout)
+        service_file = temp_dir / "mypackage/src/collective/mypackage/api/services/stats/get.py"
         assert_file_exists(service_file)
 
 
@@ -46,7 +51,7 @@ class TestRestapiServiceCreation:
         return pkg_dir
 
     def test_creates_service_module(self, addon_dir, restapi_service_template):
-        """Service creates service module."""
+        """Service creates per-verb module in its own subpackage."""
         run_copier(
             restapi_service_template,
             addon_dir,
@@ -56,11 +61,11 @@ class TestRestapiServiceCreation:
             },
         )
 
-        service_file = addon_dir / "src/collective/mypackage/services/health_check.py"
-        assert_file_exists(service_file)
+        service_file = addon_dir / "src/collective/mypackage/api/services/health_check/get.py"
+        assert_file_exists(service_file, content_contains="class HealthCheckGet")
 
-    def test_creates_services_init(self, addon_dir, restapi_service_template):
-        """Service creates services __init__.py."""
+    def test_creates_api_inits(self, addon_dir, restapi_service_template):
+        """Service creates api/, api/services/, and service __init__.py files."""
         run_copier(
             restapi_service_template,
             addon_dir,
@@ -70,11 +75,13 @@ class TestRestapiServiceCreation:
             },
         )
 
-        init_file = addon_dir / "src/collective/mypackage/services/__init__.py"
-        assert_file_exists(init_file)
+        base = addon_dir / "src/collective/mypackage/api"
+        assert_file_exists(base / "__init__.py")
+        assert_file_exists(base / "services/__init__.py")
+        assert_file_exists(base / "services/stats/__init__.py")
 
     def test_creates_services_configure_zcml(self, addon_dir, restapi_service_template):
-        """Service creates services configure.zcml."""
+        """Service creates the zcml include chain api -> services -> service."""
         run_copier(
             restapi_service_template,
             addon_dir,
@@ -84,11 +91,20 @@ class TestRestapiServiceCreation:
             },
         )
 
-        zcml_file = addon_dir / "src/collective/mypackage/services/configure.zcml"
-        assert_file_exists(zcml_file)
+        base = addon_dir / "src/collective/mypackage/api"
+        assert_file_exists(
+            base / "configure.zcml", content_contains='package=".services"'
+        )
+        assert_file_exists(
+            base / "services/configure.zcml", content_contains='package=".stats"'
+        )
+        assert_file_exists(
+            base / "services/stats/configure.zcml",
+            content_contains="<plone:service",
+        )
 
     def test_service_has_get_method(self, addon_dir, restapi_service_template):
-        """Service file contains GET method."""
+        """Service GET module contains reply method."""
         run_copier(
             restapi_service_template,
             addon_dir,
@@ -99,7 +115,7 @@ class TestRestapiServiceCreation:
             },
         )
 
-        service_file = addon_dir / "src/collective/mypackage/services/stats.py"
+        service_file = addon_dir / "src/collective/mypackage/api/services/stats/get.py"
         assert_file_exists(service_file, content_contains="def reply")
 
     def test_service_endpoint_name(self, addon_dir, restapi_service_template):
@@ -113,7 +129,10 @@ class TestRestapiServiceCreation:
             },
         )
 
-        zcml_file = addon_dir / "src/collective/mypackage/services/configure.zcml"
+        zcml_file = (
+            addon_dir
+            / "src/collective/mypackage/api/services/my_custom_endpoint/configure.zcml"
+        )
         assert_file_exists(zcml_file, content_contains="@my-custom-endpoint")
 
 
@@ -148,7 +167,7 @@ class TestRestapiServiceIntegration:
         assert "@stats" in subtemplates["services"]
 
     def test_adds_parent_zcml_include(self, addon_dir, restapi_service_template):
-        """Service adds include to parent configure.zcml."""
+        """Service adds api include to parent configure.zcml."""
         run_copier(
             restapi_service_template,
             addon_dir,
@@ -159,7 +178,26 @@ class TestRestapiServiceIntegration:
         )
 
         parent_zcml = addon_dir / "src/my/pkg/configure.zcml"
-        assert_file_exists(parent_zcml, content_contains='<include package=".services" />')
+        assert_file_exists(parent_zcml, content_contains='<include package=".api" />')
+
+    def test_second_service_coexists(self, addon_dir, restapi_service_template):
+        """A second service is additive, not destructive."""
+        for name in ("stats", "info"):
+            run_copier(
+                restapi_service_template,
+                addon_dir,
+                data={
+                    "service_name": name,
+                    "package_name": "my.pkg",
+                },
+            )
+
+        base = addon_dir / "src/my/pkg/api/services"
+        assert_file_exists(base / "stats/get.py")
+        assert_file_exists(base / "info/get.py")
+        content = (base / "configure.zcml").read_text()
+        assert content.count('package=".stats"') == 1
+        assert content.count('package=".info"') == 1
 
 
 class TestRestapiServiceEdgeCases:
@@ -177,7 +215,7 @@ class TestRestapiServiceEdgeCases:
         return pkg_dir
 
     def test_service_with_post_method(self, addon_dir, restapi_service_template):
-        """Service with POST method support."""
+        """Service with POST method support gets its own post.py module."""
         run_copier(
             restapi_service_template,
             addon_dir,
@@ -188,14 +226,22 @@ class TestRestapiServiceEdgeCases:
             },
         )
 
-        service_file = addon_dir / "src/collective/mypackage/services/submit.py"
-        assert_file_exists(service_file, content_contains="def POST(self)")
+        service_file = addon_dir / "src/collective/mypackage/api/services/submit/post.py"
+        assert_file_exists(
+            service_file,
+            content_contains=["class SubmitPost", "def reply"],
+        )
 
-        zcml_file = addon_dir / "src/collective/mypackage/services/configure.zcml"
-        assert_file_exists(zcml_file, content_contains='method="POST"')
+        zcml_file = (
+            addon_dir / "src/collective/mypackage/api/services/submit/configure.zcml"
+        )
+        assert_file_exists(
+            zcml_file,
+            content_contains=['method="POST"', 'factory=".post.SubmitPost"'],
+        )
 
     def test_service_with_delete_method(self, addon_dir, restapi_service_template):
-        """Service with DELETE method support."""
+        """Service with DELETE method support gets its own delete.py module."""
         run_copier(
             restapi_service_template,
             addon_dir,
@@ -206,11 +252,33 @@ class TestRestapiServiceEdgeCases:
             },
         )
 
-        service_file = addon_dir / "src/collective/mypackage/services/cleanup.py"
-        assert_file_exists(service_file, content_contains="def DELETE(self)")
+        service_file = addon_dir / "src/collective/mypackage/api/services/cleanup/delete.py"
+        assert_file_exists(
+            service_file,
+            content_contains=["class CleanupDelete", "def reply"],
+        )
 
-        zcml_file = addon_dir / "src/collective/mypackage/services/configure.zcml"
+        zcml_file = (
+            addon_dir / "src/collective/mypackage/api/services/cleanup/configure.zcml"
+        )
         assert_file_exists(zcml_file, content_contains='method="DELETE"')
+
+    def test_get_disabled_omits_get_module(self, addon_dir, restapi_service_template):
+        """No get.py when GET is disabled and the service is not expandable."""
+        run_copier(
+            restapi_service_template,
+            addon_dir,
+            data={
+                "service_name": "submit",
+                "package_name": "collective.mypackage",
+                "http_get": False,
+                "http_post": True,
+            },
+        )
+
+        base = addon_dir / "src/collective/mypackage/api/services/submit"
+        assert not (base / "get.py").exists()
+        assert_file_exists(base / "post.py")
 
     def test_service_for_site_root(self, addon_dir, restapi_service_template):
         """Service registered for IPloneSiteRoot."""
@@ -224,7 +292,10 @@ class TestRestapiServiceEdgeCases:
             },
         )
 
-        zcml_file = addon_dir / "src/collective/mypackage/services/configure.zcml"
+        zcml_file = (
+            addon_dir
+            / "src/collective/mypackage/api/services/site_info/configure.zcml"
+        )
         assert_file_exists(
             zcml_file,
             content_contains="Products.CMFPlone.interfaces.IPloneSiteRoot",
@@ -252,7 +323,10 @@ class TestRestapiServiceEdgeCases:
                 "service_for": own_iface,
             },
         )
-        zcml_file = addon_dir / "src/collective/mypackage/services/configure.zcml"
+        zcml_file = (
+            addon_dir
+            / "src/collective/mypackage/api/services/article_info/configure.zcml"
+        )
         assert_file_exists(zcml_file, content_contains=f'for="{own_iface}"')
 
     def test_service_for_manual_entry(
@@ -270,5 +344,72 @@ class TestRestapiServiceEdgeCases:
                 "service_for_manual": custom,
             },
         )
-        zcml_file = addon_dir / "src/collective/mypackage/services/configure.zcml"
+        zcml_file = (
+            addon_dir
+            / "src/collective/mypackage/api/services/custom_svc/configure.zcml"
+        )
         assert_file_exists(zcml_file, content_contains=f'for="{custom}"')
+
+
+class TestRestapiServiceProfileWiring:
+    """metadata.xml dependency and description propagation."""
+
+    @pytest.fixture
+    def addon_dir(self, temp_dir, backend_addon_template):
+        pkg_dir = temp_dir / "mypackage"
+        run_copier(
+            backend_addon_template,
+            pkg_dir,
+            data={"package_name": "collective.mypackage"},
+        )
+        return pkg_dir
+
+    def _apply(self, addon_dir, restapi_service_template, **extra):
+        data = {
+            "service_name": "stats",
+            "package_name": "collective.mypackage",
+        }
+        data.update(extra)
+        result = run_copier(restapi_service_template, addon_dir, data=data)
+        assert result.returncode == 0, f"copier failed: {result.stderr}"
+
+    def test_metadata_gains_restapi_dependency(
+        self, addon_dir, restapi_service_template
+    ):
+        self._apply(addon_dir, restapi_service_template)
+        metadata = (
+            addon_dir
+            / "src/collective/mypackage/profiles/default/metadata.xml"
+        )
+        assert_file_exists(
+            metadata,
+            content_contains=(
+                "<dependency>profile-plone.restapi:default</dependency>"
+            ),
+        )
+
+    def test_metadata_dependency_added_exactly_once(
+        self, addon_dir, restapi_service_template
+    ):
+        self._apply(addon_dir, restapi_service_template, service_name="stats")
+        self._apply(addon_dir, restapi_service_template, service_name="info")
+        content = (
+            addon_dir
+            / "src/collective/mypackage/profiles/default/metadata.xml"
+        ).read_text()
+        assert content.count("profile-plone.restapi:default") == 1
+
+    def test_service_description_lands_in_module(
+        self, addon_dir, restapi_service_template
+    ):
+        self._apply(
+            addon_dir,
+            restapi_service_template,
+            service_description="Aggregated usage statistics",
+        )
+        service = (
+            addon_dir / "src/collective/mypackage/api/services/stats/get.py"
+        )
+        assert_file_exists(
+            service, content_contains="Aggregated usage statistics"
+        )

@@ -40,33 +40,19 @@ def post_copy(dest_path: str, indexer_name: str) -> None:
     package_name = ctx.package_name
     package_folder = ctx.package_folder
 
-    # Extend indexers/configure.zcml with the adapter registrations
-    dummy_factory = f".{indexer_name}.dummy"
-    real_factory = f".{indexer_name}.{indexer_name}"
-    dummy_snippet = (
-        "  <adapter\n"
-        f'      factory="{dummy_factory}"\n'
-        f'      name="{indexer_name}"\n'
-        "      />\n"
-    )
-    real_snippet = (
-        "  <adapter\n"
-        f'      factory="{real_factory}"\n'
-        f'      name="{indexer_name}"\n'
-        "      />\n"
-    )
+    # The adapters live in a per-indexer <name>.zcml (bobtemplates parity);
+    # indexers/configure.zcml only includes it.
     indexers_zcml = dest / f"src/{package_folder}/indexers/configure.zcml"
-    for factory, snippet in ((dummy_factory, dummy_snippet), (real_factory, real_snippet)):
-        _, msg = extend_configure_zcml(
-            indexers_zcml,
-            package_name or "package",
-            namespaces={},
-            element_tag="adapter",
-            identifying_attr="factory",
-            identifying_value=factory,
-            snippet=snippet,
-        )
-        print(msg)
+    _, msg = extend_configure_zcml(
+        indexers_zcml,
+        package_name or "package",
+        namespaces={},
+        element_tag="include",
+        identifying_attr="file",
+        identifying_value=f"{indexer_name}.zcml",
+        snippet=f'  <include file="{indexer_name}.zcml" />\n',
+    )
+    print(msg)
 
     parent_zcml = dest / f"src/{package_folder}/configure.zcml"
     if parent_zcml.exists():

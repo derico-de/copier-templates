@@ -35,7 +35,7 @@ class TestRuffConfiguration:
         """Generated pyproject.toml ignores S101 in tests."""
         data = read_toml(addon_dir / "pyproject.toml")
         per_file = data["tool"]["ruff"]["lint"]["per-file-ignores"]
-        assert "S101" in per_file["tests/**"]
+        assert "S101" in per_file["src/**/tests/**"]
 
     def test_ruff_has_isort_config(self, addon_dir):
         """Generated pyproject.toml has isort known-first-party."""

@@ -22,7 +22,7 @@ _tasks:
   - command:
       - "rm"
       - "-f"
-      - "{{ _copier_conf.dst_path }}/src/{{ package_folder }}/viewlets/{{ viewlet_module }}.pt"
+      - "{{ _copier_conf.dst_path }}/src/{{ package_folder }}/viewlets/{{ viewlet_template_name }}.pt"
     when: "{{ not viewlet_template }}"
   - command:
       - "uv"
@@ -108,14 +108,23 @@ package_folder:
   help: "Parent addon package folder (e.g., collective/mypackage)"
   default: "{{ package_name | replace('.', '/') }}"
 
-# Computed: PascalCase -> snake_case module
+# Computed: python module is snake_case of the viewlet *name* (bobtemplates:
+# 'myviewlet' -> myviewlet.py)
 viewlet_module:
+  type: str
+  default: "{{ viewlet_name | lower | replace('-', '_') | replace(' ', '_') }}"
+  when: false
+
+# Computed: template file is dash-separated from the *class* name
+# (bobtemplates: MyViewlet -> my-viewlet.pt; mismatched separators are
+# intentional legacy behavior)
+viewlet_template_name:
   type: str
   default: >-
     {%- set ns = namespace(out='') -%}
     {%- for ch in viewlet_class_name -%}
     {%- if ch.isupper() and ns.out -%}
-    {%- set ns.out = ns.out + '_' + ch|lower -%}
+    {%- set ns.out = ns.out + '-' + ch|lower -%}
     {%- else -%}
     {%- set ns.out = ns.out + ch|lower -%}
     {%- endif -%}

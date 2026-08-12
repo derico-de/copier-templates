@@ -1,0 +1,20 @@
+"""{{ service_name }} REST API service — PATCH.
+
+{{ service_description }}
+"""
+from plone.restapi.services import Service
+
+
+class {{ service_class }}Patch(Service):
+    """{{ service_description }}
+
+    Endpoint: PATCH {{ service_endpoint }}
+    """
+
+    def reply(self):
+        """Update data and return the JSON response."""
+        return {
+            "service": "{{ service_endpoint }}",
+            "method": "PATCH",
+            "status": "updated",
+        }

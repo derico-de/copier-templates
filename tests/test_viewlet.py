@@ -3,7 +3,7 @@
 Mirrors bobtemplates.plone viewlet. Generates:
   src/<pkg>/viewlets/__init__.py
   src/<pkg>/viewlets/<module>.py       (ViewletBase subclass)
-  src/<pkg>/viewlets/<module>.pt       (optional)
+  src/<pkg>/viewlets/<template-name>.pt  (optional, dash-separated)
   src/<pkg>/viewlets/configure.zcml    (browser:viewlet registration)
 """
 import pytest
@@ -39,18 +39,19 @@ class TestViewletCreation:
 
     def test_creates_viewlet_module(self, fresh_addon, viewlet_template):
         self._apply(fresh_addon, viewlet_template)
-        module = fresh_addon / "src/collective/mypackage/viewlets/my_viewlet.py"
+        module = fresh_addon / "src/collective/mypackage/viewlets/myviewlet.py"
         assert_file_exists(
             module,
             content_contains=[
                 "class MyViewlet",
                 "ViewletBase",
+                'ViewPageTemplateFile("my-viewlet.pt")',
             ],
         )
 
     def test_creates_viewlet_template(self, fresh_addon, viewlet_template):
         self._apply(fresh_addon, viewlet_template)
-        pt = fresh_addon / "src/collective/mypackage/viewlets/my_viewlet.pt"
+        pt = fresh_addon / "src/collective/mypackage/viewlets/my-viewlet.pt"
         assert_file_exists(pt)
 
     def test_creates_viewlet_configure_zcml(self, fresh_addon, viewlet_template):
@@ -61,7 +62,7 @@ class TestViewletCreation:
             content_contains=[
                 "<browser:viewlet",
                 'name="myviewlet"',
-                ".my_viewlet.MyViewlet",
+                ".myviewlet.MyViewlet",
             ],
         )
 
@@ -129,7 +130,7 @@ class TestViewletEdgeCases:
             },
         )
         assert result.returncode == 0, f"copier failed: {result.stderr}"
-        pt = fresh_addon / "src/collective/mypackage/viewlets/tpl_less.pt"
+        pt = fresh_addon / "src/collective/mypackage/viewlets/tpl-less.pt"
         assert not pt.exists()
 
     @pytest.mark.parametrize(

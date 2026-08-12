@@ -43,7 +43,7 @@ class TestMultipleSubtemplates:
 
         # Verify both exist
         assert_file_exists(pkg_dir / "src/collective/news/content/news_item.py")
-        assert_file_exists(pkg_dir / "src/collective/news/behaviors/ifeatured.py")
+        assert_file_exists(pkg_dir / "src/collective/news/behaviors/featured.py")
 
         # Verify both registered in settings
         pyproject = pkg_dir / "pyproject.toml"
@@ -102,8 +102,8 @@ class TestMultipleSubtemplates:
 
         # Verify all exist
         assert_file_exists(pkg_dir / "src/collective/portal/content/article.py")
-        assert_file_exists(pkg_dir / "src/collective/portal/behaviors/isocial.py")
-        assert_file_exists(pkg_dir / "src/collective/portal/services/analytics.py")
+        assert_file_exists(pkg_dir / "src/collective/portal/behaviors/social.py")
+        assert_file_exists(pkg_dir / "src/collective/portal/api/services/analytics/get.py")
 
         # Verify all registered
         pyproject = pkg_dir / "pyproject.toml"
@@ -141,10 +141,10 @@ class TestSubtemplateIdempotency:
         # No duplicate registrations in the parent configure.zcml.
         parent = (src / "configure.zcml").read_text()
         assert parent.count('package=".content"') == 1
-        assert parent.count('package=".services"') == 1
+        assert parent.count('package=".api"') == 1
         assert parent.count('package=".behaviors"') == 1
         # No duplicate elements in the feature configure.zcml files.
-        assert (src / "services/configure.zcml").read_text().count('name="@stats"') == 1
+        assert (src / "api/services/stats/configure.zcml").read_text().count('name="@stats"') == 1
         assert (
             (src / "behaviors/configure.zcml").read_text().count("<plone:behavior") == 1
         )
@@ -228,8 +228,8 @@ class TestFullStackIntegration:
         assert_file_exists(project_dir / "pyproject.toml")
         assert_file_exists(addon_dir / "pyproject.toml")
         assert_file_exists(addon_dir / "src/collective/mysite/content/page.py")
-        assert_file_exists(addon_dir / "src/collective/mysite/behaviors/isocial.py")
-        assert_file_exists(addon_dir / "src/collective/mysite/services/stats.py")
+        assert_file_exists(addon_dir / "src/collective/mysite/behaviors/social.py")
+        assert_file_exists(addon_dir / "src/collective/mysite/api/services/stats/get.py")
 
         # Verify project has correct settings
         project_pyproject = read_toml(project_dir / "pyproject.toml")
@@ -316,9 +316,9 @@ class TestSubtemplateMultipleInstances:
             )
 
         # Verify all exist
-        assert_file_exists(pkg_dir / "src/my/pkg/behaviors/ifeatured.py")
-        assert_file_exists(pkg_dir / "src/my/pkg/behaviors/itaggable.py")
-        assert_file_exists(pkg_dir / "src/my/pkg/behaviors/isocial.py")
+        assert_file_exists(pkg_dir / "src/my/pkg/behaviors/featured.py")
+        assert_file_exists(pkg_dir / "src/my/pkg/behaviors/taggable.py")
+        assert_file_exists(pkg_dir / "src/my/pkg/behaviors/social.py")
 
         # Verify all registered
         pyproject = pkg_dir / "pyproject.toml"

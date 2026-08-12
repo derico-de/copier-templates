@@ -362,7 +362,13 @@ def test_free_text_field_accepts_hostile_input(
         f"stderr:\n{result.stderr}"
     )
 
-    hits = _find_in_tree(target_dir, HOSTILE)
+    # Fields that land in XML are escaped there (e.g. ' -> &#39;), which is
+    # a faithful landing, not mangling.
+    from markupsafe import escape as xml_escaped
+
+    hits = _find_in_tree(target_dir, HOSTILE) or _find_in_tree(
+        target_dir, str(xml_escaped(HOSTILE))
+    )
     assert hits, (
         f"{spec.name}::{field_name} did not land in any generated file. "
         "Either the field is unused or it was mangled by intermediate "
@@ -454,6 +460,76 @@ class TestInProcessCopierApi:
             unsafe=True,
         )
 
-        behavior_file = dst / "src/collective/mypackage/behaviors/ithing.py"
+        behavior_file = dst / "src/collective/mypackage/behaviors/thing.py"
         assert behavior_file.exists()
         assert HOSTILE in behavior_file.read_text()
+
+
+# XML-structural characters that must be escaped wherever free text lands in
+# generated XML/ZCML (profile files, FTI, registrations). Complements HOSTILE,
+# which deliberately excludes them.
+XML_HOSTILE = "Desc & <tag> \"quoted\" 'apo' &amp; more"
+
+# (template name, field) pairs whose free-text answer can land in XML/ZCML.
+# Name fields (content_type_name, portlet_name, theme_name, ...) are excluded
+# for the same reason as in SPECS: they derive Python/file identifiers, so
+# XML-structural characters would break the generated code before any XML
+# escaping is exercised.
+_XML_FIELD_CASES: list[tuple[str, str]] = [
+    ("backend_addon", "package_title"),
+    ("backend_addon", "package_description"),
+    ("behavior", "behavior_description"),
+    ("content_type", "content_type_description"),
+    ("controlpanel", "controlpanel_title"),
+    ("controlpanel", "controlpanel_description"),
+    ("portlet", "portlet_description"),
+    ("site_initialization", "site_name"),
+    ("upgrade_step", "upgrade_step_title"),
+    ("upgrade_step", "upgrade_step_description"),
+]
+
+_SPEC_BY_NAME = {spec.name: spec for spec in SPECS}
+
+
+@pytest.mark.parametrize(
+    "spec_name,field_name",
+    _XML_FIELD_CASES,
+    ids=[f"{name}::{field}" for name, field in _XML_FIELD_CASES],
+)
+def test_xml_structural_chars_stay_wellformed(
+    request, temp_dir, spec_name: str, field_name: str
+):
+    """XML-structural characters in free text must not break generated XML.
+
+    Runs the template with ``&``, ``<``, ``>``, ``"``, ``'`` in the given
+    field and asserts the run exits 0 and every generated ``.xml``/``.zcml``
+    file still parses.
+    """
+    import xml.etree.ElementTree as ET
+
+    spec = _SPEC_BY_NAME[spec_name]
+    target_dir = _scaffold_parent(request, spec, temp_dir)
+    template_path = request.getfixturevalue(spec.fixture)
+
+    data = dict(spec.base_data)
+    data[field_name] = XML_HOSTILE
+
+    result = run_copier(template_path, target_dir, data=data)
+    assert result.returncode == 0, (
+        f"{spec.name}::{field_name} aborted on XML-hostile input:\n"
+        f"stdout:\n{result.stdout}\n"
+        f"stderr:\n{result.stderr}"
+    )
+
+    unparsable = []
+    for path in target_dir.rglob("*"):
+        if not path.is_file() or path.suffix not in (".xml", ".zcml"):
+            continue
+        try:
+            ET.parse(path)
+        except ET.ParseError as exc:
+            unparsable.append(f"{path}: {exc}")
+    assert not unparsable, (
+        f"{spec.name}::{field_name} produced malformed XML:\n"
+        + "\n".join(unparsable)
+    )

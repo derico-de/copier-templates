@@ -10,5 +10,13 @@ export default defineConfig({
   build: {
     outDir: "../../src/{{ package_folder }}/svelte_apps/static/{{ svelte_app_name }}",
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // Fixed names so the bundle registry entries
+        // (++plone++{{ package_name }}.svelte/{{ svelte_app_name }}/...) resolve.
+        entryFileNames: "{{ svelte_app_name }}-bundle.js",
+        assetFileNames: "{{ svelte_app_name }}-bundle.[ext]",
+      },
+    },
   },
 });

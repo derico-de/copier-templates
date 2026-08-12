@@ -11,19 +11,19 @@ Creates a standalone Plone addon package with complete Python package structure,
 ├── CHANGELOG.md
 ├── .editorconfig
 ├── .pre-commit-config.yaml
-├── src/<package_folder>/
-│   ├── __init__.py
-│   ├── configure.zcml
-│   ├── testing.py
-│   ├── setuphandlers.py
-│   ├── locales/
-│   └── profiles/
-│       ├── default/metadata.xml
-│       └── uninstall/metadata.xml
-└── tests/
+└── src/<package_folder>/
     ├── __init__.py
-    ├── conftest.py
-    └── test_setup.py
+    ├── configure.zcml
+    ├── testing.py
+    ├── setuphandlers.py
+    ├── locales/
+    ├── profiles/
+    │   ├── default/metadata.xml
+    │   └── uninstall/metadata.xml
+    └── tests/            # inside the package (bobtemplates layout)
+        ├── __init__.py
+        ├── conftest.py
+        └── test_setup.py
 ```
 
 Addon settings are stored in `[tool.plone.backend_addon.settings]` in `pyproject.toml`, enabling subtemplates (`content_type`, `behavior`, `restapi_service`) to auto-detect the addon context.

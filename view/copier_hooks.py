@@ -48,27 +48,23 @@ def post_copy(
     package_name = ctx.package_name
     package_folder = ctx.package_folder
 
-    # Extend views/configure.zcml (create if missing) with a new browser:page
+    # Extend views/configure.zcml (create if missing) with a new browser:page,
+    # bound to the package's browser layer (bobtemplates parity).
     views_zcml = dest / f"src/{package_folder}/views/configure.zcml"
+    layer = ctx.browser_layer()
+    lines = [
+        "  <browser:page",
+        f'      name="{view_name}"',
+        f'      for="{view_for_interface}"',
+        f'      class=".{view_module}.{view_class_name}"',
+    ]
     if view_template.lower() == "true":
-        snippet = (
-            "  <browser:page\n"
-            f'      name="{view_name}"\n'
-            f'      for="{view_for_interface}"\n'
-            f'      class=".{view_module}.{view_class_name}"\n'
-            f'      template="{view_module}.pt"\n'
-            '      permission="zope2.View"\n'
-            "      />\n"
-        )
-    else:
-        snippet = (
-            "  <browser:page\n"
-            f'      name="{view_name}"\n'
-            f'      for="{view_for_interface}"\n'
-            f'      class=".{view_module}.{view_class_name}"\n'
-            '      permission="zope2.View"\n'
-            "      />\n"
-        )
+        lines.append(f'      template="{view_module}.pt"')
+    lines.append('      permission="zope2.View"')
+    if layer:
+        lines.append(f'      layer="{layer}"')
+    lines.append("      />")
+    snippet = "\n".join(lines) + "\n"
     _, msg = extend_configure_zcml(
         views_zcml,
         package_name or "package",

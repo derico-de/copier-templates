@@ -1,0 +1,20 @@
+"""{{ service_name }} REST API service — DELETE.
+
+{{ service_description }}
+"""
+from plone.restapi.services import Service
+
+
+class {{ service_class }}Delete(Service):
+    """{{ service_description }}
+
+    Endpoint: DELETE {{ service_endpoint }}
+    """
+
+    def reply(self):
+        """Delete data and return the JSON response."""
+        return {
+            "service": "{{ service_endpoint }}",
+            "method": "DELETE",
+            "status": "deleted",
+        }

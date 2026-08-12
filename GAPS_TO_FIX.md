@@ -18,38 +18,72 @@ content_type robot test, mockup_pattern demo page.
 
 ---
 
-## 1. Subtemplate file/dir layout divergences (must-fix)
+## 0. Functional parity regressions — FIXED (2026-07)
 
-### 1.1 `behavior`
+Found by comparing every copier post-copy hook against its bobtemplates.plone
+counterpart (spec: `plans/spec-bobtemplates-parity-regressions.md`). All fixed:
+
+- **Profile dependencies**: content_type now declares
+  `profile-plone.app.dexterity:default`, restapi_service
+  `profile-plone.restapi:default`, and all three theme templates
+  `profile-plone.app.theming:default` in `metadata.xml` (idempotent shared
+  `MetadataXMLUpdater.add_dependency`).
+- **Content type versioning/diff**: content_type registers the type in
+  `repositorytool.xml` (`at_edit_autoversion`, `version_on_revert`) and
+  `diff_tool.xml` (Compound Diff), as bobtemplates did.
+- **Destructive profile renders**: `portlets.xml` and `controlpanel.xml` were
+  static template renders — a second portlet/controlpanel overwrote the first.
+  Both are now idempotent post-copy merges. portlets.xml also regained the
+  bobtemplates `<for interface="...IColumn" />` entry and i18n attributes.
+- **XML escaping**: free-text answers (titles, descriptions) are escaped in
+  every hook/updater splice (`shared/utils/xml_escape.py`) and via explicit
+  `| e` filters in XML-emitting Jinja templates.
+- **behavior module name**: `my_behavior.py` instead of `imybehavior.py`
+  (was §1.1 below).
+- **form permission/layer**: form registrations restored to
+  `cmf.ManagePortal`; view and form registrations are bound to the package
+  browser layer again.
+- **svelte_app static resources**: restored the `plone:static` registration
+  for the bundle directory (`++plone++<pkg>.svelte`). Deviation from
+  bobtemplates: the directory is `svelte_apps/static` (the vite build
+  output) because `svelte_apps/` itself holds the Python mount-point
+  modules in the copier layout; vite output filenames now match the bundle
+  registry entries.
+- **restapi_service description**: verified the asked description lands in
+  the generated service module (regression report was against an older
+  state); covered by a render test now.
+- **CI**: new opt-in e2e smoke test (`tests/test_e2e_smoke.py`,
+  `-m integration`) generates an addon with content_type + behavior + view +
+  restapi_service, installs it into a real Plone site and runs the
+  generated package's own test suite.
+
+---
+
+## 1. Subtemplate file/dir layout divergences (must-fix) — FIXED (2026-07)
+
+All items below are fixed except the flagged parts of §1.10/§1.11 (see the
+individual sections).
+
+### 1.1 `behavior` — FIXED
 | legacy | new |
 |---|---|
-| `src/<pkg>/behaviors/my_behavior.py` | `src/<pkg>/behaviors/imybehavior.py` |
+| `src/<pkg>/behaviors/my_behavior.py` | `src/<pkg>/behaviors/my_behavior.py` ✓ |
 
-**Fix:** filename is `<snake_case(behavior_name)>.py`, not `i<lowercase(behavior_name)>.py`.
-Compute `behavior_module` from `behavior_name` with snake_case (e.g. `MyBehavior` →
-`my_behavior`). Keep the interface name `IMyBehavior` inside the file.
+`behavior_module` is now snake_case of the behavior class (`MyBehavior` →
+`my_behavior`; `IMyBehavior` interface name kept inside the file).
 
-### 1.2 `content_type`
-| legacy | new |
-|---|---|
-| `src/<pkg>/content/my_content_type.py` | `src/<pkg>/content/mycontenttype.py` |
-| `src/<pkg>/content/my_content_type.xml` (FTI in `content/`) | `src/<pkg>/profiles/default/types/MyContentType.xml` only |
+### 1.2 `content_type` — FIXED
+`content_type_module` is now snake_case of the class (`MyContentType` →
+`my_content_type.py`), and `content/<snake>.xml` ships a plone.supermodel
+schema stub (verified against the bobtemplates source — the content-local XML
+is a supermodel model, not an FTI).
 
-**Fix:**
-- Module filename must be `snake_case(content_type_name).py` (`MyContentType` → `my_content_type`).
-- Also emit `content/<snake>.xml` with an FTI stub (legacy emits both content-local FTI and
-  the profile-level one).
-
-### 1.3 `controlpanel` — flattened to module, should be subpackage
-| legacy | new |
-|---|---|
-| `controlpanels/my_control_panel/__init__.py` | — |
-| `controlpanels/my_control_panel/configure.zcml` | — |
-| `controlpanels/my_control_panel/controlpanel.py` | `controlpanels/my_control_panel.py` |
-
-**Fix:** generate a subpackage `controlpanels/<snake>/` with `__init__.py`,
-`configure.zcml`, and `controlpanel.py`. Parent `controlpanels/configure.zcml`
-should include the subpackage.
+### 1.3 `controlpanel` — FIXED
+Generates the subpackage `controlpanels/<snake>/` with `__init__.py`,
+`controlpanel.py`, and a self-contained `configure.zcml` (browser:page bound
+to the package browser layer + plone.restapi adapter).
+`controlpanels/configure.zcml` only accumulates `<include package=".<snake>" />`
+entries (idempotent merge).
 
 ### 1.4 `restapi_service` — `api/` vs `services/` tree
 Legacy nests services under `api/services/<name>/` with per-service files:
@@ -69,9 +103,12 @@ src/<pkg>/services/configure.zcml
 src/<pkg>/services/<name>.py
 ```
 
-**Fix:** generate the nested `api/services/<name>/` layout with one Python file
-per HTTP verb (`get.py`/`post.py`/...). `services/` → `api/services/` everywhere
-(including the include added to parent `configure.zcml`).
+**FIXED:** the nested `api/services/<name>/` layout is generated with one
+Python module per HTTP verb (`get.py`/`post.py`/`patch.py`/`delete.py`, each a
+`Service` subclass with `reply()` — also fixing that POST/PATCH/DELETE
+handlers were previously methods plone.restapi never called), a per-service
+`configure.zcml`, and the include chain parent → `.api` → `.services` →
+`.<module>`. Verb classes follow bobtemplates naming (`StatsGet`).
 
 ### 1.5 `portlet`
 | legacy | new |
@@ -79,8 +116,9 @@ per HTTP verb (`get.py`/`post.py`/...). `services/` → `api/services/` everywhe
 | `portlets/myportlet.py` | `portlets/my_portlet.py` |
 | `portlets/myportlet.pt` | `portlets/my_portlet.pt` |
 
-**Fix:** module name has no underscore (`MyPortlet` → `myportlet`, *lower-concat*,
-not snake_case). The test file is `tests/test_myportlet.py` in legacy.
+**FIXED:** module name follows bobtemplates (`snakecase(slugify(name))`):
+`MyPortlet` → `myportlet.py`/`myportlet.pt`, `My Portlet` → `my_portlet.py`.
+The generated test file is `test_<module>.py` (`test_myportlet.py`).
 
 ### 1.6 `viewlet`
 | legacy | new |
@@ -88,34 +126,36 @@ not snake_case). The test file is `tests/test_myportlet.py` in legacy.
 | `viewlets/myviewlet.py` | `viewlets/my_viewlet.py` |
 | `viewlets/my-viewlet.pt` *(dash!)* | `viewlets/my_viewlet.pt` |
 
-**Fix:** Python module is lower-concat (`myviewlet.py`); template file uses
-dash-separated name (`my-viewlet.pt`). Mismatched separators are intentional in
-the legacy template — reproduce exactly.
+**FIXED:** the Python module is snake_case of `viewlet_name`
+(default `myviewlet` → `myviewlet.py`) and the template file is
+dash-separated from the class name (`MyViewlet` → `my-viewlet.pt`). The
+mismatched separators reproduce the legacy behavior exactly.
 
 ### 1.7 `vocabulary`
 | legacy | new |
 |---|---|
 | `vocabularies/available_things.py` (default name) | `vocabularies/my_vocabulary.py` |
 
-**Fix:** default `vocabulary_name` in copier.yml is `AvailableThings` so the
-generated module is `available_things.py` (match legacy default). Also the test
-name follows: `tests/test_vocab_available_things.py`.
+**FIXED** (prior pass): default `vocabulary_name` is `AvailableThings`, so the
+generated module is `available_things.py` and the test
+`test_vocab_available_things.py`.
 
 ### 1.8 `upgrade_step`
 | legacy | new |
 |---|---|
 | `upgrades/1001/.gitkeep` | — |
 
-**Fix:** emit an empty `.gitkeep` inside `upgrades/<dest_version>/` so the
-per-version directory exists even before any file-based upgrade handlers are added.
+**FIXED:** `upgrades/<dest_version>/` ships both `.gitkeep` and the (empty)
+`metadata.txt` — the legacy template contains both.
 
 ### 1.9 `indexer`
 | legacy | new |
 |---|---|
 | `indexers/my_indexer.zcml` (separate) + included in `indexers/configure.zcml` | zcml inlined in `indexers/configure.zcml` |
 
-**Fix:** emit a per-indexer zcml file `indexers/<snake>.zcml`; the folder-level
-`indexers/configure.zcml` should `<include file="<snake>.zcml" />` the new one.
+**FIXED:** the adapters (dummy guard + indexer) live in a per-indexer
+`indexers/<name>.zcml`; `indexers/configure.zcml` accumulates
+`<include file="<name>.zcml" />` entries (idempotent merge).
 
 ### 1.10 `mockup_pattern`
 | legacy | new |
@@ -123,12 +163,14 @@ per-version directory exists even before any file-based upgrade handlers are add
 | `browser/pattern-demo.pt` | `browser/pat-<name>-demo.pt` *(just fixed, wrong name)* |
 | `resources/pat-<name>/my-pattern.{js,scss,test.js}`, `resources/bundle.js`, `resources/pat-<name>/documentation.md` | `src/<pkg>/patterns/…` (no top-level `resources/`) |
 
-**Fix:**
-- Rename to `browser/pattern-demo.pt` (the legacy filename is fixed, does not include
-  the pattern name).
-- Also emit legacy top-level `resources/` layout with `pat-<name>/{<name>.js, <name>.scss,
-  <name>.test.js, documentation.md}` and a root `resources/bundle.js`. The current
-  `src/<pkg>/patterns/` tree is new-only.
+**Partially FIXED:**
+- `browser/pattern-demo.pt` (fixed legacy filename) — done.
+- The top-level `resources/` relocation is deliberately NOT done: the
+  self-contained `src/<pkg>/patterns/` tree (webpack/babel/package.json) was
+  established together with the bundle registrations in the §0 pass, and the
+  legacy `resources/` layout only works with the legacy top-level npm/webpack
+  scaffold (§3.4), which is flagged as probably out of scope. Revisit together
+  with the §3 decision.
 
 ### 1.11 `svelte_app`
 | legacy | new |
@@ -136,55 +178,35 @@ per-version directory exists even before any file-based upgrade handlers are add
 | `src/<pkg>/svelte_apps/<app>/{README.md,favicon.png,global.css,index.html}` | `src/<pkg>/svelte_apps/__init__.py`, `<module>.py`, `<module>.pt` |
 | `svelte_src/<app>/{rollup.config.js,.gitignore,README.md,scripts/setupTypeScript.js}` | `svelte_src/<app>/vite.config.js` (only) |
 
-**Fix:**
-- Ship app assets (`README.md`, `favicon.png`, `global.css`, `index.html`) inside
-  `src/<pkg>/svelte_apps/<app>/` as well as the compile sources.
-- In `svelte_src/<app>/` add `rollup.config.js`, `.gitignore`, `README.md`,
-  `scripts/setupTypeScript.js` to match legacy. (Decide: keep `vite.config.js`
-  alongside rollup, or drop vite — confirm with maintainer. Rule says
-  "stay the same", so remove vite and use rollup.)
-- `src/<pkg>/svelte_apps/__init__.py`, `<module>.py`, `<module>.pt` are new-only
-  and should be removed unless a maintainer intentionally added them.
+**Deliberately NOT changed** — conflicts with the newer §0 decision: the
+copier layout keeps vite (`svelte_src/<app>/vite.config.js`) with build output
+in `svelte_apps/static/` and the Python mount-point modules in
+`svelte_apps/`, because the vite output filenames are matched to the bundle
+registry entries (documented deviation in §0). Converting to the legacy
+rollup layout would undo that fix. Needs an explicit maintainer decision;
+revisit together with §3/§4.
 
 ---
 
-## 2. `tests/` location — top-level vs inside package
+## 2. `tests/` location — top-level vs inside package — FIXED (2026-07)
 
-| legacy | new |
-|---|---|
-| `src/<pkg>/tests/**` | `tests/**` |
+All templates now emit their generated tests inside the package at
+`src/<pkg>/tests/` (legacy layout), including `robot/`. The generated
+`pyproject.toml` points pytest (`testpaths`) and the ruff `S101` per-file
+ignore at the new location.
 
-Legacy places tests *inside* the package so they ship in the distribution and
-run via `plone.testing`. New places them at the repo root.
+Filename parity: `test_behavior_<snake>.py`, `test_ct_<snake>.py`,
+`test_vocab_available_things.py`, `test_viewlet_<modname>.py`, and
+`robot/test_ct_<snake>.robot` follow the module-name fixes from §1;
+the portlet test is `test_<portlet_modname>.py` (`test_myportlet.py`)
+and the upgrade test was renamed to `test_upgrade_step_<version>.py`.
 
-**Fix:** move the tests subtemplate output to `src/<pkg>/tests/` (same layout as
-legacy). Keep files:
-`__init__.py`, `test_setup.py`, `test_behavior_<snake>.py`,
-`test_ct_<snake>.py`, `test_form_<snake>.py`, `test_indexer_<snake>.py`,
-`test_<portlet_modname>.py` (`test_myportlet.py`),
-`test_subscriber_<snake>.py`, `test_upgrade_step_<version>.py`,
-`test_view_<snake>.py`, `test_viewlet_<modname>.py`,
-`test_vocab_<snake>.py`, `robot/test_ct_<snake>.robot`.
-
-Also reconcile existing `conftest.py` (new-only) — decide whether to drop it
-(legacy has no pytest conftest; it uses `plone.testing`) or keep it at
-`src/<pkg>/tests/conftest.py`.
-
-Test filenames also need renaming to match legacy patterns:
-
-| legacy name | new name |
-|---|---|
-| `test_behavior_my_behavior.py` | `test_behavior_imybehavior.py` |
-| `test_ct_my_content_type.py` | `test_ct_mycontenttype.py` |
-| `test_myportlet.py` | `test_portlet_my_portlet.py` |
-| `test_upgrade_step_1001.py` | `test_upgrade_1001.py` |
-| `test_viewlet_myviewlet.py` | `test_viewlet_my_viewlet.py` |
-| `test_vocab_available_things.py` | `test_vocab_my_vocabulary.py` |
-| `robot/test_ct_my_content_type.robot` | `robot/test_ct_mycontenttype.robot` |
-
-New-only test files (have no legacy counterpart, decide whether to keep):
-`test_controlpanel_my_control_panel.py`, `test_service_my_service.py`,
-`test_theme_my_barceloneta.py`.
+Decisions taken:
+- `conftest.py` is kept (moved to `src/<pkg>/tests/conftest.py`) — the
+  copier templates use pytest fixtures on top of plone.testing layers.
+- New-only test files without a legacy counterpart are kept
+  (`test_controlpanel_<snake>.py`, `test_service_<snake>.py`,
+  `test_theme_my_barceloneta.py`) — additive coverage, no layout conflict.
 
 ---
 
@@ -291,9 +313,8 @@ ships actual override stubs. Decide keep/drop.
 
 ## 5. Priority suggestion
 
-1. **Layout / naming fixes** (§1 + §2): these affect every addon generated and
-   break assumptions downstream users have built up against bobtemplates. Do
-   first.
+1. ~~**Layout / naming fixes** (§1 + §2)~~ — DONE (2026-07), except the
+   flagged parts of §1.10/§1.11 which depend on the §3/§4 decisions.
 2. **`browser/` skeleton + namespace `__init__.py`** (§3.5, §3.6): needed for
    static resources and namespace packaging to work as expected.
 3. **Extras-to-review** (§4): each needs a one-line decision (keep / drop /

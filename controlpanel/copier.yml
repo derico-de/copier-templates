@@ -32,6 +32,7 @@ _tasks:
       - "{{ controlpanel_name }}"
       - "{{ controlpanel_url_id }}"
       - "{{ controlpanel_module }}"
+      - "{{ controlpanel_title }}"
 
 controlpanel_name:
   type: str
@@ -72,6 +73,12 @@ controlpanel_module:
     {%- endif -%}
     {%- endfor -%}
     {{ ns.out }}
+  when: false
+
+# Computed: browser layer interface (backend_addon naming convention)
+browser_layer_name:
+  type: str
+  default: "I{{ package_name.replace('.', ' ').replace('_', ' ').title().replace(' ', '') }}Layer"
   when: false
 
 # Computed: PascalCase -> kebab-case URL id

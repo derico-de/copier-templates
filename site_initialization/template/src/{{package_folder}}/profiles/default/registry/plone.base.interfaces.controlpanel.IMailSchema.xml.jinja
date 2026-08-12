@@ -4,7 +4,7 @@
   <record field="email_from_name"
           interface="plone.base.interfaces.controlpanel.IMailSchema"
           name="plone.email_from_name">
-    <value>{{ site_name }}</value>
+    <value>{{ site_name | e }}</value>
   </record>
 
   <record field="email_from_address"

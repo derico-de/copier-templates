@@ -166,7 +166,7 @@ class TestViewGeneratedTestAdaptsRegisteredType:
     """The generated test must create the type the view is registered for."""
 
     def _generated_test(self, addon, module="my_view"):
-        return addon / f"tests/test_view_{module}.py"
+        return addon / f"src/collective/mypackage/tests/test_view_{module}.py"
 
     def test_default_for_any_uses_document(self, fresh_addon, view_template):
         result = apply_subtemplate(
@@ -296,3 +296,46 @@ class TestViewEdgeCases:
         assert result.returncode == 0, f"copier failed: {result.stderr}"
         module = fresh_addon / "src/collective/mypackage/views/my_view.py"
         assert import_fragment in module.read_text()
+
+
+class TestViewLayerBinding:
+    """View registrations are bound to the addon browser layer."""
+
+    def _apply(self, fresh_addon, view_template, **extra):
+        data = {"view_name": "my-view", "package_name": "collective.mypackage"}
+        data.update(extra)
+        result = apply_subtemplate(view_template, fresh_addon, data=data)
+        assert result.returncode == 0, f"copier failed: {result.stderr}"
+
+    def test_registration_has_layer(self, fresh_addon, view_template):
+        self._apply(fresh_addon, view_template)
+        zcml = fresh_addon / "src/collective/mypackage/views/configure.zcml"
+        assert_file_exists(
+            zcml,
+            content_contains=(
+                'layer="collective.mypackage.interfaces.'
+                'ICollectiveMypackageLayer"'
+            ),
+        )
+
+    def test_registration_keeps_view_permission(
+        self, fresh_addon, view_template
+    ):
+        self._apply(fresh_addon, view_template)
+        zcml = fresh_addon / "src/collective/mypackage/views/configure.zcml"
+        assert_file_exists(
+            zcml, content_contains='permission="zope2.View"'
+        )
+
+    def test_generated_test_marks_request_with_layer(
+        self, fresh_addon, view_template
+    ):
+        self._apply(fresh_addon, view_template)
+        test_file = fresh_addon / "src/collective/mypackage/tests/test_view_my_view.py"
+        assert_file_exists(
+            test_file,
+            content_contains=[
+                "alsoProvides",
+                "ICollectiveMypackageLayer",
+            ],
+        )
