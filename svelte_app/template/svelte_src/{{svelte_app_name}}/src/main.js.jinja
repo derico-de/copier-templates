@@ -1,12 +1,12 @@
+{% if svelte_app_custom_element -%}
+import "./App.svelte";
+{% else -%}
+import { mount } from "svelte";
 import App from "./App.svelte";
 
 const target = document.getElementById("{{ svelte_app_name }}");
 
-const app = target
-  ? new App({
-      target,
-      props: {},
-    })
-  : null;
-
-export default app;
+if (target) {
+  mount(App, { target });
+}
+{% endif -%}

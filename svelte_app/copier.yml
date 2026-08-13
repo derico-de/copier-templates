@@ -18,7 +18,8 @@ _tasks:
       - "{{ _copier_conf.src_path }}/copier_hooks.py"
       - "validate"
       - "{{ _copier_conf.dst_path }}"
-    when: "{{ _copier_conf.operation == 'copy' }}"
+      - "{{ svelte_app_name }}"
+      - "{{ svelte_app_custom_element }}"
   - command:
       - "uv"
       - "run"
@@ -30,12 +31,27 @@ _tasks:
       - "post_copy"
       - "{{ _copier_conf.dst_path }}"
       - "{{ svelte_app_name }}"
+      - "{{ svelte_app_module }}"
+      - "{{ svelte_app_class }}"
 
 svelte_app_name:
   type: str
   help: "Svelte application name (kebab-case, e.g. 'my-svelte-app')"
   default: "my-svelte-app"
-  validator: "{% if not svelte_app_name %}App name is required{% endif %}"
+  validator: >-
+    {%- set allowed = "abcdefghijklmnopqrstuvwxyz0123456789-" -%}
+    {%- set ns = namespace(invalid=false) -%}
+    {%- for char in svelte_app_name -%}
+    {%- if char not in allowed -%}{%- set ns.invalid = true -%}{%- endif -%}
+    {%- endfor -%}
+    {%- if not svelte_app_name -%}
+    App name is required
+    {%- elif svelte_app_name[0] not in "abcdefghijklmnopqrstuvwxyz"
+        or svelte_app_name[-1] == "-"
+        or "--" in svelte_app_name
+        or ns.invalid -%}
+    App name must use lowercase kebab-case
+    {%- endif -%}
 
 svelte_app_description:
   type: str
@@ -46,6 +62,16 @@ svelte_app_custom_element:
   type: bool
   help: "Compile as a Web Component (custom element)?"
   default: false
+  validator: >-
+    {%- set reserved = [
+      "annotation-xml", "color-profile", "font-face", "font-face-src",
+      "font-face-uri", "font-face-format", "font-face-name", "missing-glyph"
+    ] -%}
+    {%- if svelte_app_custom_element and "-" not in svelte_app_name -%}
+    A custom element name must contain a hyphen
+    {%- elif svelte_app_custom_element and svelte_app_name in reserved -%}
+    This custom element name is reserved by HTML
+    {%- endif -%}
 
 # Package info
 package_name:

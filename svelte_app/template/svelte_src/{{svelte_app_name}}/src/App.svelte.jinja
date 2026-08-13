@@ -1,12 +1,17 @@
+{% if svelte_app_custom_element -%}
+<svelte:options customElement="{{ svelte_app_name }}" />
+
+{% endif -%}
 <script>
-  export let title = "{{ svelte_app_name }}";
-  let count = 0;
+  let { title = "{{ svelte_app_name }}" } = $props();
+  let count = $state(0);
+  const description = {{ svelte_app_description | tojson | replace("\\u0027", "'") }};
 </script>
 
 <main>
   <h1>{title}</h1>
-  <p>{{ svelte_app_description }}</p>
-  <button on:click={() => count++}>Clicked {count} time{count === 1 ? '' : 's'}</button>
+  <p>{description}</p>
+  <button onclick={() => count++}>Clicked {count} time{count === 1 ? '' : 's'}</button>
 </main>
 
 <style>
