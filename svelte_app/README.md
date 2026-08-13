@@ -11,18 +11,21 @@ Python mount view that serves an HTML shell for the built bundle.
 ## What it generates
 
 ### Frontend (`svelte_src/<app>/`)
-- `src/App.svelte` -- root component
-- `src/main.js` -- entry point that mounts `App` onto `#<app-name>`
-- `package.json` -- vite + svelte dev deps
-- `vite.config.js` -- sveltekit-less vite config, outputs into
-  `src/<package>/svelte_apps/static/<app>/`. Supports a
-  `svelte_app_custom_element` switch for Web Components.
+- `src/App.svelte` -- Svelte 5 root component using runes
+- `src/main.js` -- entry point that mounts `App` or registers its custom element
+- `index.html` -- local Vite development page
+- `package.json` -- current Svelte, Vite, and Vite plugin dependencies
+- `README.md` -- local development and build commands
+- `svelte.config.js` -- Svelte compiler configuration
+- `vite.config.js` -- SvelteKit-less library build that outputs into
+  `src/<package>/svelte_apps/static/<app>/`
+
+The generated setup requires Node.js 20.19+ or 22.12+.
 
 ### Backend (`src/<package>/svelte_apps/`)
 - `__init__.py`
 - `<module>.py` -- `BrowserView` subclass serving the mount page
-- `<module>.pt` -- HTML shell template with the mount `<div>` and a
-  `<script type="module">` loading the built bundle
+- `<module>.pt` -- HTML shell with a mount `<div>` or custom element
 
 Records the app in
 `[tool.plone.backend_addon.settings.subtemplates.svelte_apps]`.
@@ -57,4 +60,5 @@ npm run build
 ```
 
 The build output lands inside the Python package under
-`src/<package>/svelte_apps/static/<app>/`.
+`src/<package>/svelte_apps/static/<app>/`. Use `npm run dev` for Vite's
+local development server.

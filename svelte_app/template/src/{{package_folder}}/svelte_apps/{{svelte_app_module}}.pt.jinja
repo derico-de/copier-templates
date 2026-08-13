@@ -6,10 +6,11 @@
       i18n_domain="{{ package_name }}">
   <body>
     <metal:content-core fill-slot="content-core">
+{% if svelte_app_custom_element %}
+      <{{ svelte_app_name }}></{{ svelte_app_name }}>
+{% else %}
       <div id="{{ svelte_app_name }}"></div>
-      <script type="module"
-              tal:attributes="src string:${portal_url}/++resource++{{ package_name }}/svelte_apps/{{ svelte_app_name }}/main.js">
-      </script>
+{% endif %}
     </metal:content-core>
   </body>
 </html>
