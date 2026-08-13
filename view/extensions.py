@@ -20,8 +20,6 @@ from shared.utils.content_types_scanner import (  # noqa: E402
 class ContentTypeInterfacesHook(ContextHook):
     """Populate ``view_for_choices`` and the test-context for the view's ``for``."""
 
-    update = False
-
     def hook(self, context):
         dst_path = Path(context.get("_copier_conf", {}).get("dst_path", "") or ".")
         choices = all_content_type_interfaces(dst_path)

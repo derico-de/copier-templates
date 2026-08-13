@@ -9,6 +9,7 @@ _plonecli:
   description: "Create a Plone/Zope project structure"
 _jinja_extensions:
   - copier_template_extensions.TemplateExtensionLoader
+  - extensions.py:SharedFiltersExtension
   - extensions.py:AddonContextHook
   - extensions.py:PloneVersionsHook
 

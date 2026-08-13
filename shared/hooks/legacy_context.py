@@ -141,15 +141,12 @@ def _read_pyproject_project_section(start_path: Path) -> dict[str, Any] | None:
         with open(pyproject_path, "rb") as f:
             doc = tomllib.load(f)
 
-        # Only use this fallback if there are NO plone backend_addon settings
-        plone_settings = (
-            doc.get("tool", {})
-            .get("plone", {})
-            .get("backend_addon", {})
-            .get("settings", {})
-        )
-        if plone_settings:
-            # Not a legacy package - handled by normal detection
+        # Only use this fallback if there are no modern Plone settings.
+        # A standalone zope-setup project is not a legacy backend add-on.
+        plone = doc.get("tool", {}).get("plone", {})
+        addon_settings = plone.get("backend_addon", {}).get("settings", {})
+        project_settings = plone.get("project", {}).get("settings", {})
+        if addon_settings or project_settings:
             return None
 
         project = doc.get("project", {})

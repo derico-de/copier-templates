@@ -1,5 +1,8 @@
 # theme
 
+This is an alternative to `theme_basic` and `theme_barceloneta`. Remove an
+existing generated theme before applying a different theme template.
+
 Adds a full Diazo-based Plone theme (webpack + SCSS partials + Diazo
 rules + GenericSetup profile) to an existing `backend_addon` package.
 Must be run inside an addon directory.

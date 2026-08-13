@@ -5,6 +5,7 @@ import tomllib
 from pathlib import Path
 
 from copier_template_extensions import ContextHook
+from jinja2.ext import Extension
 
 # Ensure shared package is importable
 _repo_root = Path(__file__).resolve().parent.parent
@@ -12,13 +13,21 @@ if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
 from shared.hooks.legacy_context import find_legacy_addon_context  # noqa: E402
+from shared.utils.jinja_filters import python_string, toml_string  # noqa: E402
 from shared.utils.plone_versions import fetch_plone_versions, get_major_minor_versions  # noqa: E402
+
+
+class SharedFiltersExtension(Extension):
+    """Register serialization filters used by generated files."""
+
+    def __init__(self, environment):
+        super().__init__(environment)
+        environment.filters["toml_string"] = toml_string
+        environment.filters["python_string"] = python_string
 
 
 class PloneVersionsHook(ContextHook):
     """Populate Plone version lists from PyPI for use in copier.yml choices."""
-
-    update = True
 
     def hook(self, context):
         all_versions = fetch_plone_versions()

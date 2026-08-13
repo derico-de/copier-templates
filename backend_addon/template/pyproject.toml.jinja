@@ -1,19 +1,19 @@
 [project]
-name = "{{ package_name }}"
+name = {{ package_name | toml_string }}
 version = "1.0.0a1"
-description = "{{ package_description }}"
+description = {{ package_description | toml_string }}
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "GPL-2.0-or-later"}
 authors = [
-    {name = "{{ author_name }}", email = "{{ author_email }}"}
+    {name = {{ author_name | toml_string }}, email = {{ author_email | toml_string }}}
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Web Environment",
     "Framework :: Plone",
     "Framework :: Plone :: Addon",
-    "Framework :: Plone :: {{ plone_version }}",
+    {{ ("Framework :: Plone :: " ~ plone_version) | toml_string }},
     "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
@@ -24,7 +24,7 @@ classifiers = [
 keywords = ["Plone", "CMS"]
 
 dependencies = [
-    "Plone>={{ plone_version }}",
+    {{ ("Plone>=" ~ plone_version) | toml_string }},
     "setuptools<81",
 {%- if is_headless %}
     "plone.restapi",
@@ -41,10 +41,10 @@ test = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/{{ github_organization }}/{{ package_name }}"
-Documentation = "https://github.com/{{ github_organization }}/{{ package_name }}"
-Repository = "https://github.com/{{ github_organization }}/{{ package_name }}.git"
-Issues = "https://github.com/{{ github_organization }}/{{ package_name }}/issues"
+Homepage = {{ ("https://github.com/" ~ github_organization ~ "/" ~ package_name) | toml_string }}
+Documentation = {{ ("https://github.com/" ~ github_organization ~ "/" ~ package_name) | toml_string }}
+Repository = {{ ("https://github.com/" ~ github_organization ~ "/" ~ package_name ~ ".git") | toml_string }}
+Issues = {{ ("https://github.com/" ~ github_organization ~ "/" ~ package_name ~ "/issues") | toml_string }}
 
 [project.entry-points."z3c.autoinclude.plugin"]
 target = "plone"
@@ -54,17 +54,17 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/{{ package_folder.split('/')[0] }}"]
+packages = [{{ ("src/" ~ package_folder.split('/')[0]) | toml_string }}]
 
 [tool.plone.backend_addon.settings]
-package_name = "{{ package_name }}"
-package_title = "{{ package_title }}"
-package_description = "{{ package_description }}"
-package_folder = "{{ package_folder }}"
-plone_version = "{{ plone_version }}"
+package_name = {{ package_name | toml_string }}
+package_title = {{ package_title | toml_string }}
+package_description = {{ package_description | toml_string }}
+package_folder = {{ package_folder | toml_string }}
+plone_version = {{ plone_version | toml_string }}
 is_headless = {{ is_headless | lower }}
-author_name = "{{ author_name }}"
-author_email = "{{ author_email }}"
+author_name = {{ author_name | toml_string }}
+author_email = {{ author_email | toml_string }}
 
 [tool.plone.backend_addon.settings.subtemplates]
 content_types = []
@@ -72,11 +72,11 @@ behaviors = []
 services = []
 
 [tool.pytest.ini_options]
-testpaths = ["src/{{ package_folder }}/tests"]
+testpaths = [{{ ("src/" ~ package_folder ~ "/tests") | toml_string }}]
 python_files = ["test_*.py"]
 
 [tool.coverage.run]
-source = ["{{ package_name }}"]
+source = [{{ package_name | toml_string }}]
 omit = ["*/tests/*"]
 
 [tool.ruff]
@@ -108,7 +108,7 @@ ignore = ["E731"]
 force-single-line = true
 order-by-type = false
 lines-after-imports = 2
-known-first-party = ["{{ package_name.split('.')[0] }}"]
+known-first-party = [{{ package_name.split('.')[0] | toml_string }}]
 
 [tool.ruff.format]
 preview = true

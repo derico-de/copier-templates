@@ -18,8 +18,6 @@ from shared.utils.xml_updater import MetadataXMLUpdater  # noqa: E402
 class AddonContextHook(ContextHook):
     """Auto-fill package info from parent addon and read current profile version."""
 
-    update = True
-
     def hook(self, context):
         dest = Path(context.get("_copier_conf", {}).get("dst_path", "."))
         if not dest.is_absolute():

@@ -8,6 +8,7 @@ _plonecli:
   description: "Create a Plone backend addon package"
 _jinja_extensions:
   - copier_template_extensions.TemplateExtensionLoader
+  - extensions.py:SharedFiltersExtension
   - extensions.py:PloneVersionsHook
   - extensions.py:LegacyContextHook
 

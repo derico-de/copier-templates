@@ -67,6 +67,30 @@ class TestZopeSetupIsolated:
         settings = data["tool"]["plone"]["project"]["settings"]
         assert settings["plone_version"] == "6.1.1"
 
+    def test_toml_escapes_free_text(self, temp_dir, zope_setup_template):
+        """Quotes, newlines, and backslashes remain valid TOML strings."""
+        project_dir = temp_dir / "hostile"
+        description = 'Line one\nLine two \\ path with "quotes" and 😀'
+        author = 'Eval "Runner" 😀'
+        result = run_copier(
+            zope_setup_template,
+            project_dir,
+            data={
+                "project_name": "hostile",
+                "project_title": 'Quoted "title"',
+                "project_description": description,
+                "author_name": author,
+            },
+        )
+
+        assert result.returncode == 0, result.stderr
+        data = read_toml(project_dir / "pyproject.toml")
+        assert data["project"]["description"] == description
+        assert data["project"]["authors"][0]["name"] == author
+        tasks = (project_dir / "tasks.py").read_text()
+        compile(tasks, str(project_dir / "tasks.py"), "exec")
+        assert repr(description) in tasks
+
     def test_creates_zope_conf(self, temp_dir, zope_setup_template):
         """Zope-setup creates rendered zope.conf."""
         run_copier(

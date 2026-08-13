@@ -1,17 +1,17 @@
 [project]
-name = "{{ project_name }}"
+name = {{ project_name | toml_string }}
 version = "1.0.0"
-description = "{{ project_description }}"
+description = {{ project_description | toml_string }}
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "GPL-2.0-or-later"}
 authors = [
-    {name = "{{ author_name }}", email = "{{ author_email }}"}
+    {name = {{ author_name | toml_string }}, email = {{ author_email | toml_string }}}
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Framework :: Plone",
-    "Framework :: Plone :: {{ plone_version.split('.')[0] }}.{{ plone_version.split('.')[1] }}",
+    {{ ("Framework :: Plone :: " ~ plone_version.split('.')[0] ~ "." ~ plone_version.split('.')[1]) | toml_string }},
     "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.10",
@@ -20,8 +20,8 @@ classifiers = [
 ]
 
 dependencies = [
-    "{{ distribution }}",
-    "Plone=={{ plone_version }}",
+    {{ distribution | toml_string }},
+    {{ ("Plone==" ~ plone_version) | toml_string }},
 {%- if db_storage == "relstorage" %}
     "RelStorage[postgresql]",
 {%- endif %}
@@ -52,10 +52,10 @@ build-backend = "hatchling.build"
 packages = ["src"]
 
 [tool.plone.project.settings]
-plone_version = "{{ plone_version }}"
-distribution = "{{ distribution }}"
-db_storage = "{{ db_storage }}"
-created_at = "{{ current_date }}"
+plone_version = {{ plone_version | toml_string }}
+distribution = {{ distribution | toml_string }}
+db_storage = {{ db_storage | toml_string }}
+created_at = {{ current_date | toml_string }}
 instances = []
 
 [tool.uv]
@@ -88,7 +88,7 @@ ignore = ["E731"]
 "tests/**" = ["S101"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["{{ project_name.split('.')[0] }}"]
+known-first-party = [{{ project_name.split('.')[0] | toml_string }}]
 
 [tool.ruff.format]
 preview = true
