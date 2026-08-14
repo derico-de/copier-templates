@@ -2,6 +2,10 @@ _min_copier_version: "9.0.0"
 _subdirectory: template
 _answers_file: .copier-answers.theme.yml
 
+_jinja_extensions:
+  - copier_template_extensions.TemplateExtensionLoader
+  - extensions.py:ThemeConflictHook
+
 _plonecli:
   type: sub
   parent: backend_addon

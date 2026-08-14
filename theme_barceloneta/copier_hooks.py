@@ -18,7 +18,8 @@ from utils.xml_updater import extend_configure_zcml  # noqa: E402
 def validate(dest_path: str) -> None:
     dest = Path(dest_path)
     warn_git_unclean(dest)
-    if not find_addon_context(dest):
+    context = find_addon_context(dest)
+    if not context:
         raise AddonContextError(
             f"No parent addon detected at {dest}. "
             "This template must be run inside an existing backend_addon."
@@ -36,6 +37,7 @@ def post_copy(dest_path: str, theme_name: str) -> None:
 
     if ctx.register_subtemplate("themes", theme_name):
         print(f"Registered theme '{theme_name}' in addon settings.")
+    ctx.register_subtemplate("theme_templates", "theme_barceloneta")
 
     _register_theme_static_resource(ctx, theme_name)
 

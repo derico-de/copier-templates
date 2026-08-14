@@ -18,8 +18,6 @@ from shared.utils.content_types_scanner import (  # noqa: E402
 class ServiceForInterfacesHook(ContextHook):
     """Populate ``service_for_choices`` with default + package interfaces."""
 
-    update = False
-
     def hook(self, context):
         dst_path = Path(context.get("_copier_conf", {}).get("dst_path", "") or ".")
         choices = all_content_type_interfaces(dst_path)

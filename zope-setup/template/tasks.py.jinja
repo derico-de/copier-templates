@@ -90,26 +90,28 @@ def create_site(c, site_id="Plone", instance="instance"):
     import os
     import tempfile
 
-    script = '''
+    project_title = {{ project_title | python_string }}
+    project_description = {{ project_description | python_string }}
+    script = '''\
 from Testing.makerequest import makerequest
 import transaction
 app = makerequest(app)
 from plone.distribution.api import site as site_api
 site_api.create(
     app,
-    "{{ distribution_name }}",
+    {{ distribution_name | python_string }},
     {
-        "site_id": "SITE_ID",
-        "title": "{{ project_title }}",
-        "description": "{{ project_description }}",
+        "site_id": %r,
+        "title": %r,
+        "description": %r,
         "default_language": "en",
         "portal_timezone": "UTC",
         "setup_content": False,
     },
 )
 transaction.commit()
-print("Created site: SITE_ID")
-'''.replace("SITE_ID", site_id)
+print("Created site:", %r)
+''' % (site_id, project_title, project_description, site_id)
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write(script)
         script_path = f.name

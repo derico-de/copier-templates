@@ -30,14 +30,18 @@ def check_git_status(path: Path | None = None) -> dict:
         "modified_files": [],
     }
 
-    # Check if it's a git repository
+    # Ignore an unrelated parent repository. Template checks are scoped to the
+    # generated project passed by Copier.
     try:
-        subprocess.run(
-            ["git", "rev-parse", "--git-dir"],
+        root = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
             cwd=path,
             capture_output=True,
             check=True,
-        )
+            text=True,
+        ).stdout.strip()
+        if Path(root).resolve() != path.resolve():
+            return result
         result["is_git_repo"] = True
     except (subprocess.CalledProcessError, FileNotFoundError):
         return result
@@ -52,7 +56,11 @@ def check_git_status(path: Path | None = None) -> dict:
             check=True,
         )
 
-        lines = status_output.stdout.strip().split("\n") if status_output.stdout.strip() else []
+        lines = (
+            status_output.stdout.strip().split("\n")
+            if status_output.stdout.strip()
+            else []
+        )
 
         for line in lines:
             if not line:
@@ -127,19 +135,15 @@ def warn_git_unclean(path: Path | None = None) -> None:
     status = check_git_status(path)
 
     if not status["is_git_repo"]:
-        print("\n" + "=" * 60)
-        print("WARNING: Not a git repository!")
-        print("=" * 60)
-        print("\nIt is recommended to run templates in a git repository")
-        print("so you can easily review and revert changes.")
-        print("=" * 60 + "\n")
         return
 
     if not status["is_clean"]:
         print("\n" + "=" * 60)
         print("WARNING: Git repository has uncommitted changes!")
         print("=" * 60)
-        print("\nIt is recommended to commit or stash changes before running templates.")
+        print(
+            "\nIt is recommended to commit or stash changes before running templates."
+        )
         if status["modified_files"]:
             print("\nModified files:")
             for f in status["modified_files"]:

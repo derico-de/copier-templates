@@ -15,8 +15,6 @@ from shared.utils.content_types_scanner import all_portal_types  # noqa: E402
 class ParentPortalTypesHook(ContextHook):
     """Populate ``parent_content_type_choices`` with default + package portal types."""
 
-    update = False
-
     def hook(self, context):
         dst_path = Path(context.get("_copier_conf", {}).get("dst_path", "") or ".")
         choices = all_portal_types(dst_path)

@@ -437,6 +437,40 @@ class TestZCMLIntegrity:
         assert "@stats" in subtemplates["services"]
 
 
+    def test_theme_variants_are_explicit_alternatives(
+        self,
+        fresh_addon,
+        theme_template,
+        theme_barceloneta_template,
+    ):
+        """Applying a second theme fails clearly before Copier conflicts."""
+        first = run_copier(
+            theme_template,
+            fresh_addon,
+            data={"theme_name": "First Theme"},
+        )
+        assert first.returncode == 0, first.stderr
+
+        second = run_copier(
+            theme_barceloneta_template,
+            fresh_addon,
+            data={"theme_name": "Second Theme"},
+        )
+
+        assert second.returncode != 0
+        assert "Theme templates are alternatives" in (second.stdout + second.stderr)
+
+    def test_same_theme_variant_can_be_reapplied(self, fresh_addon, theme_template):
+        """Reconfiguring the selected variant remains supported."""
+        for name in ("First Theme", "Updated Theme"):
+            result = run_copier(
+                theme_template,
+                fresh_addon,
+                data={"theme_name": name},
+            )
+            assert result.returncode == 0, result.stderr
+
+
 class TestZopeSetupOnAddon:
     """Test zope-setup as subtemplate of backend_addon."""
 
@@ -609,8 +643,9 @@ class TestZopeSetupOnAddon:
         assert "uv" in data["tool"]
         assert "constraint-dependencies" in data["tool"]["uv"]
 
-        # Verify project settings
+        # Verify project settings without misclassifying it as an add-on.
         assert "project" in data["tool"]["plone"]
+        assert "backend_addon" not in data["tool"]["plone"]
         settings = data["tool"]["plone"]["project"]["settings"]
         assert settings["plone_version"] == "6.1.1"
         assert settings["distribution"] == "plone.volto"

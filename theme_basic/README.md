@@ -1,5 +1,8 @@
 # theme_basic
 
+This is an alternative to `theme` and `theme_barceloneta`. Remove an existing
+generated theme before applying a different theme template.
+
 Adds a minimal Diazo-based Plone theme (`manifest.cfg`, `rules.xml`,
 `index.html`, `scss/theme.scss`, `css/theme.css`, `js/theme.js`,
 `package.json`, GenericSetup `theme.xml`) to an existing `backend_addon`

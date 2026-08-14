@@ -81,6 +81,30 @@ class TestBackendAddonIsolated:
         assert settings["package_name"] == "collective.mypackage"
         assert settings["package_folder"] == "collective/mypackage"
 
+    def test_toml_escapes_free_text(self, temp_dir, backend_addon_template):
+        """Quotes, newlines, and backslashes remain valid TOML strings."""
+        package_dir = temp_dir / "hostile"
+        description = 'Line one\nLine two \\ path with "quotes" and 😀'
+        author = 'Eval "Runner" 😀'
+        run_copier(
+            backend_addon_template,
+            package_dir,
+            data={
+                "package_name": "collective.hostile",
+                "package_title": 'Quoted "title"',
+                "package_description": description,
+                "author_name": author,
+                "github_organization": 'org "quoted" \\ path',
+            },
+        )
+
+        data = read_toml(package_dir / "pyproject.toml")
+        assert data["project"]["description"] == description
+        assert data["project"]["authors"][0]["name"] == author
+        settings = data["tool"]["plone"]["backend_addon"]["settings"]
+        assert settings["package_title"] == 'Quoted "title"'
+        assert settings["package_description"] == description
+
     def test_creates_configure_zcml(self, temp_dir, backend_addon_template):
         """Backend addon creates configure.zcml."""
         run_copier(

@@ -1,5 +1,8 @@
 # theme_barceloneta
 
+This is an alternative to `theme` and `theme_basic`. Remove an existing
+generated theme before applying a different theme template.
+
 Adds a Barceloneta-based Plone theme variant to an existing
 `backend_addon` package. Must be run inside an addon directory.
 
