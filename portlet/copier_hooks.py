@@ -10,7 +10,6 @@ from hooks.addon_context import (  # noqa: E402
     find_addon_context,
     resolve_post_copy_context,
 )
-from hooks.git_check import warn_git_unclean  # noqa: E402
 from utils.xml_updater import (  # noqa: E402
     ParentZCMLUpdater,
     PortletsXMLUpdater,
@@ -20,7 +19,6 @@ from utils.xml_updater import (  # noqa: E402
 
 def validate(dest_path: str) -> None:
     dest = Path(dest_path)
-    warn_git_unclean(dest)
     if not find_addon_context(dest):
         raise AddonContextError(
             f"No parent addon detected at {dest}. "

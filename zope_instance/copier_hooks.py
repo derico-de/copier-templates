@@ -7,7 +7,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "shared"))
 
 from exceptions import CopierTemplateError, ProjectContextError
-from hooks.git_check import warn_git_unclean
 from hooks.project_context import find_project_context
 from utils.pyproject_updater import PyprojectUpdater
 
@@ -15,9 +14,6 @@ from utils.pyproject_updater import PyprojectUpdater
 def validate(dest_path: str) -> None:
     """Validate that we are inside a zope-setup project."""
     dest = Path(dest_path)
-
-    # Warn about git state (non-blocking)
-    warn_git_unclean(dest)
 
     # Check project context (blocking)
     context = find_project_context(dest)
