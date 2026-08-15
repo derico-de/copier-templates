@@ -18,7 +18,7 @@ _tasks:
       - "{{ _copier_conf.src_path }}/copier_hooks.py"
       - "validate"
       - "{{ _copier_conf.dst_path }}"
-    when: "{{ _copier_conf.operation == 'copy' }}"
+    when: "{{ _copier_operation == 'copy' }}"
   - command:
       - "rm"
       - "-f"

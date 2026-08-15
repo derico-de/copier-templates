@@ -11,7 +11,6 @@ from hooks.addon_context import (  # noqa: E402
     find_addon_context,
     resolve_post_copy_context,
 )
-from hooks.git_check import warn_git_unclean  # noqa: E402
 from utils.xml_updater import (  # noqa: E402
     MetadataXMLUpdater,
     ParentZCMLUpdater,
@@ -22,9 +21,6 @@ from utils.xml_updater import (  # noqa: E402
 def validate(dest_path: str) -> None:
     """Validate that parent addon exists."""
     dest = Path(dest_path)
-
-    # Warn about git state (non-blocking)
-    warn_git_unclean(dest)
 
     # Check addon context (blocking - raises exception)
     context = find_addon_context(dest)

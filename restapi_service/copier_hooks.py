@@ -8,16 +8,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "shared"))
 
 from exceptions import AddonContextError, CopierTemplateError
 from hooks.addon_context import find_addon_context, resolve_post_copy_context
-from hooks.git_check import warn_git_unclean
 from utils.xml_updater import ParentZCMLUpdater, extend_configure_zcml
 
 
 def validate(dest_path: str) -> None:
     """Validate that parent addon exists."""
     dest = Path(dest_path)
-
-    # Warn about git state (non-blocking)
-    warn_git_unclean(dest)
 
     # Check addon context (blocking - raises exception)
     context = find_addon_context(dest)
