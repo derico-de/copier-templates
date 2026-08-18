@@ -4,7 +4,7 @@ zope_conf = %(here)s/zope.conf
 
 [server:main]
 use = egg:waitress#main
-host = 0.0.0.0
+host = {{ host }}
 port = {{ port }}
 
 [filter:translogger]
