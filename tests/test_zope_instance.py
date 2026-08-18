@@ -165,6 +165,74 @@ class TestZopeInstancePort:
         )
 
 
+class TestZopeInstanceHost:
+    """Test host binding configuration."""
+
+    def test_standalone_project_binds_loopback(
+        self, temp_dir, zope_setup_template, zope_instance_template
+    ):
+        """A standalone project is a deployment target: bind to 127.0.0.1."""
+        project_dir = _create_project(temp_dir, zope_setup_template)
+        run_copier(
+            zope_instance_template,
+            project_dir,
+            data={"instance_name": "instance1", "port": 8081},
+        )
+        assert_file_exists(
+            project_dir / "var/instance1/etc/zope.ini",
+            content_contains="host = 127.0.0.1",
+        )
+
+    def test_initial_instance_binds_loopback(self, temp_dir, zope_setup_template):
+        """The instance created by zope-setup itself also binds to 127.0.0.1."""
+        project_dir = _create_project(temp_dir, zope_setup_template)
+        assert_file_exists(
+            project_dir / "var/instance/etc/zope.ini",
+            content_contains="host = 127.0.0.1",
+        )
+
+    def test_addon_project_binds_all_interfaces(
+        self, temp_dir, backend_addon_template, zope_setup_template, zope_instance_template
+    ):
+        """Inside an addon the instance is a dev server: bind to 0.0.0.0."""
+        pkg_dir = temp_dir / "myaddon"
+        result = run_copier(
+            backend_addon_template, pkg_dir, data={"package_name": "collective.myaddon"}
+        )
+        assert result.returncode == 0, f"backend_addon failed: {result.stderr}"
+
+        result = run_copier(zope_setup_template, pkg_dir, data={})
+        assert result.returncode == 0, f"zope-setup failed: {result.stderr}"
+        assert_file_exists(
+            pkg_dir / "var/instance/etc/zope.ini",
+            content_contains="host = 0.0.0.0",
+        )
+
+        result = run_copier(
+            zope_instance_template,
+            pkg_dir,
+            data={"instance_name": "instance1", "port": 8081},
+        )
+        assert result.returncode == 0, f"zope_instance failed: {result.stderr}"
+        assert_file_exists(
+            pkg_dir / "var/instance1/etc/zope.ini",
+            content_contains="host = 0.0.0.0",
+        )
+
+    def test_custom_host(self, temp_dir, zope_setup_template, zope_instance_template):
+        """Custom host is rendered in zope.ini."""
+        project_dir = _create_project(temp_dir, zope_setup_template)
+        run_copier(
+            zope_instance_template,
+            project_dir,
+            data={"instance_name": "instance1", "port": 8081, "host": "10.0.0.5"},
+        )
+        assert_file_exists(
+            project_dir / "var/instance1/etc/zope.ini",
+            content_contains="host = 10.0.0.5",
+        )
+
+
 class TestZopeInstanceDbStorage:
     """Test database storage configuration."""
 

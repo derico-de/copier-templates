@@ -36,13 +36,15 @@ def test(c, verbose=False):
 
 
 @task
-def create_instance(c, name="instance", port=8080):
+def create_instance(c, name="instance", port=8080, host=None):
     """Create a new Zope instance using the zope_instance template."""
     cmd = (
         f"copier copy --trust --defaults "
         f"--data instance_name={name} "
         f"--data port={port} "
     )
+    if host:
+        cmd += f"--data host={host} "
     cmd += "~/.copier-templates/plone-copier-templates/zope_instance ."
     c.run(cmd)
 

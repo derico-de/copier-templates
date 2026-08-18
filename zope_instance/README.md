@@ -21,6 +21,7 @@ var/<instance_name>/
 |--------|-------------|---------|
 | `instance_name` | Instance directory name (e.g., `instance`, `instance2`, `zeo-client1`) | `instance` |
 | `port` | HTTP port for this instance | `8080` |
+| `host` | Host/IP the instance binds to | `0.0.0.0` inside an addon, else `127.0.0.1` |
 | `base_path` | Base path for instance directory | `var/` |
 | `db_storage` | Database backend (`instance`, `relstorage`, `zeo`) | From project context |
 | `zeo_address` | ZEO server address (only when `db_storage=zeo`) | `localhost:8100` |
@@ -35,6 +36,8 @@ var/<instance_name>/
 ## Context detection
 
 Reads `[tool.plone.project.settings]` from the parent project's `pyproject.toml` to auto-detect `db_storage` and `project_name`. If no project context is found, the template exits with an error.
+
+`[tool.plone.backend_addon.settings]` (or legacy addon files) marks the project as an addon development environment: `host` then defaults to `0.0.0.0` so the instance is reachable from outside a container. A standalone project is a deployment target and defaults to `127.0.0.1`, expecting a reverse proxy in front.
 
 After creation, the instance is registered in `[tool.plone.project.settings].instances` in `pyproject.toml`.
 
